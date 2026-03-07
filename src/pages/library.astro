@@ -1,0 +1,52 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCardGrid from '../components/PostCardGrid.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('posts'))
+  .filter((p) => p.data.tag === 'Library')
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BaseLayout title="Library - Damien Herlihy">
+  <section class="grid-page container page-content">
+    <h1>Library</h1>
+    <p class="grid-description">
+      Books, articles, and blogs I've read that gave me insights on topics of
+      interests.
+    </p>
+    <div class="post-grid cols-3">
+      {posts.map((post) => (
+        <PostCardGrid
+          title={post.data.title}
+          category={post.data.category}
+          date={post.data.date}
+          slug={post.id}
+          image={post.data.image}
+        />
+      ))}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .grid-description {
+    margin: 16px 0 48px;
+    max-width: 700px;
+  }
+
+  .post-grid {
+    display: grid;
+    gap: 30px;
+  }
+
+  .cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    .cols-3 {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

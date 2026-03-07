@@ -1,0 +1,88 @@
+---
+interface Props {
+  email?: string;
+  heading?: string;
+  description?: string;
+}
+
+const {
+  email = 'damien@languagelayouts.com',
+  heading = 'Contact Me',
+  description = 'If you would like to discuss any of my topics of interest, collaborate on a project or be coached, please drop me an email.',
+} = Astro.props;
+---
+
+<div class="contact-section">
+  {heading && <h2 class="contact-heading">{heading}</h2>}
+  {description && <p class="contact-description">{description}</p>}
+  <form class="contact-form" data-email={email}>
+    <input type="text" placeholder="Name" class="form-field" name="name" required />
+    <input type="email" placeholder="Email" class="form-field" name="email" required />
+    <textarea placeholder="Message" class="form-field form-textarea" name="message" rows="6" required></textarea>
+    <button type="submit" class="btn-primary">Submit</button>
+  </form>
+</div>
+
+<script>
+  document.querySelectorAll('.contact-form').forEach(form => {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const f = e.currentTarget as HTMLFormElement;
+      const email = f.dataset.email;
+      const name = (f.querySelector('[name="name"]') as HTMLInputElement).value;
+      const fromEmail = (f.querySelector('[name="email"]') as HTMLInputElement).value;
+      const message = (f.querySelector('[name="message"]') as HTMLTextAreaElement).value;
+      const subject = encodeURIComponent(`Message from ${name}`);
+      const body = encodeURIComponent(`From: ${name} (${fromEmail})\n\n${message}`);
+      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+    });
+  });
+</script>
+
+<style>
+  .contact-section {
+    margin-top: 20px;
+  }
+
+  .contact-heading {
+    margin-bottom: 16px;
+  }
+
+  .contact-description {
+    color: var(--color-text);
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 700px;
+  }
+
+  .form-field {
+    padding: 16px 18px;
+    background: #f8f8f8;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 16px;
+    color: var(--color-black);
+    outline: none;
+    transition: border-color .25s cubic-bezier(.25, .46, .45, .94);
+  }
+
+  .form-field::placeholder {
+    color: var(--color-text-light);
+  }
+
+  .form-field:focus {
+    border-color: #afafaf;
+  }
+
+  .form-textarea {
+    resize: vertical;
+    min-height: 150px;
+  }
+</style>

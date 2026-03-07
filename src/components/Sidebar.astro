@@ -1,0 +1,112 @@
+---
+interface Props {
+  activeCategory?: string;
+}
+
+const { activeCategory } = Astro.props;
+
+const categories = [
+  { name: 'AI & Teaching', slug: 'ai-and-teaching' },
+  { name: 'Personal Knowledge Mgt', slug: 'personal-knowledge-mgt' },
+  { name: 'Second Mountain', slug: 'second-mountain' },
+  { name: 'Learning How to Learn', slug: 'learning-how-to-learn' },
+  { name: 'Languages', slug: 'languages' },
+];
+
+const tags = [
+  { label: 'Library', href: '/library' },
+  { label: 'Galaxy (Essay)', href: '/essays' },
+  { label: 'Constellation (Pattern)', href: '/notes' },
+  { label: 'Star (Note)', href: '/notes' },
+];
+---
+
+<aside class="sidebar">
+  <div class="sidebar-section">
+    <h6 class="sidebar-heading">Constellation (Pattern)</h6>
+    {categories.map((cat) => (
+      <a href={`/category/${cat.slug}`} class:list={['topic-link', { active: activeCategory === cat.name }]}>
+        {cat.name}
+      </a>
+    ))}
+  </div>
+
+  <div class="sidebar-section">
+    <h6 class="sidebar-heading">Tags</h6>
+    <div class="tag-pills">
+      {tags.map((tag) => (
+        <a href={tag.href} class="tag-pill">{tag.label}</a>
+      ))}
+    </div>
+  </div>
+</aside>
+
+<style>
+  .sidebar {
+    position: sticky;
+    top: calc(var(--nav-height) + 40px);
+  }
+
+  .sidebar-section {
+    margin-bottom: 40px;
+  }
+
+  .sidebar-heading {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--color-text-light);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .topic-link {
+    display: block;
+    padding: 10px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-black);
+    border-bottom: 1px solid var(--color-border);
+    transition: opacity .25s cubic-bezier(.25, .46, .45, .94);
+  }
+
+  .topic-link:hover {
+    opacity: 0.6;
+  }
+
+  .topic-link.active {
+    background: var(--color-black);
+    color: #ffffff;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    border-bottom: none;
+  }
+
+  .tag-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .tag-pill {
+    display: inline-block;
+    padding: 8px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-black);
+    transition: color .25s cubic-bezier(.25, .46, .45, .94),
+                background-color .25s cubic-bezier(.25, .46, .45, .94),
+                border-color .25s cubic-bezier(.25, .46, .45, .94);
+  }
+
+  .tag-pill:hover {
+    background-color: var(--color-black);
+    color: #ffffff;
+    border-color: var(--color-black);
+  }
+</style>
+

@@ -1,0 +1,507 @@
+---
+interface SearchPost {
+  title: string;
+  description: string;
+  category: string;
+  tag: string;
+  slug: string;
+}
+
+interface Props {
+  posts?: SearchPost[];
+}
+
+const { posts = [] } = Astro.props;
+
+const navGroups = [
+  {
+    heading: 'Page',
+    links: [
+      { label: 'Home', href: '/' },
+      { label: 'About', href: '/about' },
+      { label: 'Now', href: '/now' },
+    ],
+  },
+  {
+    heading: 'Digital Universe',
+    links: [
+      { label: 'Essays', href: '/essays' },
+      { label: 'Notes', href: '/notes' },
+      { label: 'Library', href: '/library' },
+    ],
+  },
+  {
+    heading: 'Connect',
+    links: [
+      { label: 'Contact', href: '/contact' },
+      { label: 'Services', href: '/services' },
+      { label: 'Newsletter', href: '/newsletter' },
+    ],
+  },
+];
+---
+
+<nav class="header" id="header">
+  <div class="header-inner container">
+    <button class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-label="Toggle menu">
+      <svg class="icon-hamburger" id="icon-hamburger" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+      <svg class="icon-close" id="icon-close" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+      <span class="menu-label">MENU</span>
+    </button>
+
+    <a href="/" class="logo">
+      <span class="logo-bold">Damien.</span><span class="logo-light">Herlihy</span>
+    </a>
+
+    <button class="search-trigger" id="search-trigger" aria-label="Open search">
+      <span class="search-label">SEARCH</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+    </button>
+  </div>
+
+  <div class="menu-panel" id="menu-panel">
+    <div class="menu-grid container">
+      {navGroups.map((group) => (
+        <div class="menu-col">
+          <span class="menu-heading">{group.heading}</span>
+          {group.links.map((link) => (
+            <a href={link.href}>{link.label}</a>
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div class="header-border"></div>
+</nav>
+
+<div class="header-spacer"></div>
+
+<!-- Search Overlay -->
+<div class="search-overlay" id="search-overlay">
+  <div class="search-overlay-inner container">
+    <div class="search-header">
+      <input
+        type="text"
+        class="search-input"
+        id="search-input"
+        placeholder="Search posts..."
+        autocomplete="off"
+      />
+      <button class="search-close" id="search-close" aria-label="Close search">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+    <div class="search-results" id="search-results"></div>
+  </div>
+</div>
+
+<script type="application/json" id="search-data" set:html={JSON.stringify(posts)} />
+
+<style>
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--color-bg);
+    transition: all .35s cubic-bezier(.25, .46, .45, .94);
+  }
+
+  .header-inner {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: height .35s cubic-bezier(.25, .46, .45, .94);
+  }
+
+  .header--scrolled .header-inner {
+    height: var(--nav-height);
+  }
+
+  .header-border {
+    height: 1px;
+    background: var(--color-border);
+  }
+
+  .header-spacer {
+    height: 120px;
+  }
+
+  .menu-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--color-text);
+    padding: 0;
+  }
+
+  .menu-label {
+    text-transform: uppercase;
+  }
+
+  .logo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-body);
+    font-size: 42px;
+    color: var(--color-black);
+    white-space: nowrap;
+    transition: font-size .35s cubic-bezier(.25, .46, .45, .94);
+  }
+
+  .header--scrolled .logo {
+    font-size: 28px;
+  }
+
+  .logo-bold {
+    font-weight: 700;
+  }
+
+  .logo-light {
+    font-weight: 300;
+  }
+
+  .search-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--color-text);
+    background: none;
+    border: none;
+    font-family: var(--font-body);
+    padding: 0;
+  }
+
+  .search-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Menu Panel */
+  .menu-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .4s cubic-bezier(.25, .46, .45, .94);
+  }
+
+  .menu-panel.open {
+    max-height: 300px;
+  }
+
+  .menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    padding: 40px var(--content-padding);
+  }
+
+  .menu-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+    border-right: 1px solid var(--color-border);
+    padding: 0 20px;
+  }
+
+  .menu-col:last-child {
+    border-right: none;
+  }
+
+  .menu-heading {
+    font-size: 14px;
+    color: var(--color-text-light);
+    margin-bottom: 8px;
+  }
+
+  .menu-col a {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-black);
+    transition: opacity .25s cubic-bezier(.25, .46, .45, .94);
+  }
+
+  .menu-col a:hover {
+    opacity: 0.6;
+  }
+
+  /* Search Overlay */
+  .search-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: var(--color-bg);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .25s cubic-bezier(.25, .46, .45, .94),
+                visibility .25s cubic-bezier(.25, .46, .45, .94);
+  }
+
+  .search-overlay.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .search-overlay-inner {
+    padding-top: 120px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .search-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 2px solid var(--color-black);
+    padding-bottom: 12px;
+    margin-bottom: 40px;
+  }
+
+  .search-input {
+    flex: 1;
+    font-family: var(--font-body);
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--color-black);
+    background: none;
+    border: none;
+    outline: none;
+  }
+
+  .search-input::placeholder {
+    color: var(--color-text-light);
+  }
+
+  .search-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text);
+    padding: 4px;
+    transition: color .25s cubic-bezier(.25, .46, .45, .94);
+  }
+
+  .search-close:hover {
+    color: var(--color-black);
+  }
+
+  .search-results {
+    display: flex;
+    flex-direction: column;
+  }
+
+  @media (max-width: 768px) {
+    .logo {
+      font-size: 22px;
+    }
+
+    .search-label {
+      display: none;
+    }
+
+    .menu-grid {
+      grid-template-columns: 1fr;
+      gap: 30px;
+    }
+
+    .menu-col {
+      border-right: none;
+      border-bottom: 1px solid var(--color-border);
+      padding: 0 0 20px;
+    }
+
+    .menu-col:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .menu-panel.open {
+      max-height: 600px;
+    }
+
+    .search-overlay-inner {
+      padding-top: 80px;
+    }
+
+    .search-input {
+      font-size: 22px;
+    }
+  }
+</style>
+
+<script>
+  const toggle = document.getElementById('menu-toggle')!;
+  const panel = document.getElementById('menu-panel')!;
+  const iconHamburger = document.getElementById('icon-hamburger')!;
+  const iconClose = document.getElementById('icon-close')!;
+  const header = document.getElementById('header')!;
+
+  const searchTrigger = document.getElementById('search-trigger')!;
+  const searchOverlay = document.getElementById('search-overlay')!;
+  const searchInput = document.getElementById('search-input')! as HTMLInputElement;
+  const searchClose = document.getElementById('search-close')!;
+  const searchResults = document.getElementById('search-results')!;
+
+  const posts: { title: string; description: string; category: string; tag: string; slug: string }[] =
+    JSON.parse(document.getElementById('search-data')!.textContent || '[]');
+
+  function closeMenu() {
+    panel.classList.remove('open');
+    iconHamburger.style.display = 'block';
+    iconClose.style.display = 'none';
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function openSearch() {
+    closeMenu();
+    searchOverlay.classList.add('open');
+    searchInput.value = '';
+    searchInput.focus();
+    renderResults('');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSearch() {
+    searchOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function renderResults(query: string) {
+    const q = query.toLowerCase().trim();
+    const filtered = q
+      ? posts.filter(
+          (p) =>
+            p.title.toLowerCase().includes(q) ||
+            p.description.toLowerCase().includes(q) ||
+            p.category.toLowerCase().includes(q)
+        )
+      : posts;
+
+    searchResults.innerHTML = filtered
+      .map(
+        (p) => `
+        <a href="/post/${p.slug}" class="search-result">
+          <span class="search-result-title">${p.title}</span>
+          <span class="search-result-meta">
+            <span class="search-result-tag">${p.tag}</span>
+            <span class="search-result-category">${p.category}</span>
+          </span>
+        </a>`
+      )
+      .join('');
+
+    if (q && filtered.length === 0) {
+      searchResults.innerHTML = '<p class="search-empty">No posts found</p>';
+    }
+  }
+
+  // Menu toggle
+  toggle.addEventListener('click', () => {
+    const isOpen = panel.classList.toggle('open');
+    iconHamburger.style.display = isOpen ? 'none' : 'block';
+    iconClose.style.display = isOpen ? 'block' : 'none';
+    toggle.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  // Search
+  searchTrigger.addEventListener('click', openSearch);
+  searchClose.addEventListener('click', closeSearch);
+  searchInput.addEventListener('input', () => renderResults(searchInput.value));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && searchOverlay.classList.contains('open')) {
+      closeSearch();
+    }
+  });
+
+  // Shrink header on scroll
+  window.addEventListener('scroll', () => {
+    header.classList.toggle('header--scrolled', window.scrollY > 50);
+  }, { passive: true });
+</script>
+
+<style is:global>
+  .search-result {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-black);
+    text-decoration: none;
+    transition: opacity .25s cubic-bezier(.25, .46, .45, .94);
+  }
+
+  .search-result:hover {
+    opacity: 0.6;
+  }
+
+  .search-result-title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .search-result-meta {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-left: 16px;
+  }
+
+  .search-result-tag,
+  .search-result-category {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    background: var(--color-tag-bg);
+    color: var(--color-text);
+    white-space: nowrap;
+  }
+
+  .search-empty {
+    color: var(--color-text-light);
+    font-size: 16px;
+    padding: 20px 0;
+  }
+
+  @media (max-width: 768px) {
+    .search-result {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .search-result-meta {
+      margin-left: 0;
+    }
+  }
+</style>

@@ -1,0 +1,51 @@
+---
+import { getCollection } from 'astro:content';
+import PostCardGrid from './PostCardGrid.astro';
+
+interface Props {
+  currentSlug: string;
+  category: string;
+}
+
+const { currentSlug, category } = Astro.props;
+
+const allPosts = await getCollection('posts');
+const related = allPosts
+  .filter((p) => p.id !== currentSlug && p.data.category === category)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
+---
+
+{related.length > 0 && (
+  <section class="related-posts">
+    <div class="related-grid">
+      {related.map((post) => (
+        <PostCardGrid
+          title={post.data.title}
+          category={post.data.category}
+          date={post.data.date}
+          slug={post.id}
+          image={post.data.image}
+        />
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+  .related-posts {
+    margin-top: 40px;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+  }
+
+  @media (max-width: 768px) {
+    .related-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

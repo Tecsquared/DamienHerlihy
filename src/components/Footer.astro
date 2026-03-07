@@ -1,0 +1,118 @@
+---
+const socialLinks = [
+  { label: 'YouTube', href: 'https://www.youtube.com/@damienherlihy' },
+  { label: 'Language Layouts', href: 'https://www.languagelayouts.com/' },
+  { label: 'Contact', href: '/contact' },
+];
+
+const navLinks = [
+  { label: 'Home', href: '/' },
+  { label: 'About', href: '/about' },
+  { label: 'Now', href: '/now' },
+];
+---
+
+<footer class="footer">
+  <div class="footer-inner container">
+    <div class="footer-col footer-brand">
+      <a href="/" class="footer-logo">
+        <span class="logo-bold">Damien.</span><span class="logo-light">Herlihy</span>
+      </a>
+    </div>
+    <div class="footer-col footer-social">
+      {socialLinks.map((link) => (
+        <a href={link.href} target={link.href.startsWith('http') ? '_blank' : undefined} rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}>
+          {link.label}
+        </a>
+      ))}
+    </div>
+    <div class="footer-col footer-nav">
+      {navLinks.map((link) => (
+        <a href={link.href}>{link.label}</a>
+      ))}
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--color-border);
+    padding: 50px 0;
+    margin-top: 80px;
+  }
+
+  .footer-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .footer-brand {
+    justify-content: center;
+  }
+
+  .footer-logo {
+    font-family: var(--font-body);
+    font-size: 22px;
+    color: var(--color-black);
+  }
+
+  .logo-bold {
+    font-weight: 700;
+  }
+
+  .logo-light {
+    font-weight: 300;
+  }
+
+  .footer-social {
+    text-align: center;
+    align-items: center;
+    border-left: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+    padding: 0 20px;
+  }
+
+  .footer-nav {
+    text-align: right;
+    align-items: flex-end;
+  }
+
+  .footer-col a {
+    font-size: 16px;
+    color: var(--color-text);
+    opacity: 0.7;
+    transition: opacity .25s cubic-bezier(.25, .46, .45, .94);
+  }
+
+  .footer-col a:hover {
+    opacity: 1;
+  }
+
+  @media (max-width: 768px) {
+    .footer-inner {
+      grid-template-columns: 1fr;
+      text-align: center;
+      gap: 30px;
+    }
+
+    .footer-social {
+      border: none;
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+      padding: 20px 0;
+    }
+
+    .footer-nav {
+      text-align: center;
+      align-items: center;
+    }
+  }
+</style>

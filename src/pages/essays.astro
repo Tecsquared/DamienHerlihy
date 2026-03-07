@@ -1,0 +1,52 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCardGrid from '../components/PostCardGrid.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('posts'))
+  .filter((p) => p.data.tag === 'Galaxy (Essay)')
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BaseLayout title="Essays - Damien Herlihy">
+  <section class="grid-page container page-content">
+    <h1>Galaxy/Essay</h1>
+    <p class="grid-description">
+      Longform content where I organise my stars [notes] into constellations
+      [patterns] and galaxies [essays].
+    </p>
+    <div class="post-grid cols-2">
+      {posts.map((post) => (
+        <PostCardGrid
+          title={post.data.title}
+          category={post.data.category}
+          date={post.data.date}
+          slug={post.id}
+          image={post.data.image}
+        />
+      ))}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .grid-description {
+    margin: 16px 0 48px;
+    max-width: 700px;
+  }
+
+  .post-grid {
+    display: grid;
+    gap: 40px;
+  }
+
+  .cols-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @media (max-width: 768px) {
+    .cols-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
