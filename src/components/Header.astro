@@ -57,7 +57,7 @@ const navGroups = [
     </button>
 
     <a href="/" class="logo">
-      <span class="logo-bold">Damien.</span><span class="logo-light">Herlihy</span>
+      <span class="logo-bold">Damien.</span><span class="logo-light">Herlihy</span><span class="cursor"></span>
     </a>
 
     <button class="search-trigger" id="search-trigger" aria-label="Open search">
@@ -441,9 +441,11 @@ const navGroups = [
     }
   });
 
-  // Shrink header on scroll
+  // Shrink header on scroll + stop cursor blink
   window.addEventListener('scroll', () => {
-    header.classList.toggle('header--scrolled', window.scrollY > 50);
+    const scrolled = window.scrollY > 50;
+    header.classList.toggle('header--scrolled', scrolled);
+    document.body.classList.toggle('has-scrolled', scrolled);
   }, { passive: true });
 </script>
 

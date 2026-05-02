@@ -235,6 +235,28 @@ hr {
   margin: 40px 0;
 }
 
+/* ===== Blinking Cursor ===== */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.cursor {
+  display: inline-block;
+  width: 0.45em;
+  height: 0.75em;
+  background: var(--color-black);
+  vertical-align: baseline;
+  animation: blink 1s step-end infinite;
+  margin-left: 4px;
+}
+
+body.has-scrolled .cursor {
+  opacity: 0;
+  animation: none;
+  transition: opacity 0.3s;
+}
+
 /* ===== Reduced Motion ===== */
 @media (prefers-reduced-motion: reduce) {
   html {
