@@ -54,6 +54,7 @@ const allPosts = (await getCollection('posts'))
     />
   </head>
   <body>
+    <script>if ('scrollRestoration' in history) history.scrollRestoration = 'manual';</script>
     <Header posts={allPosts} />
     <main>
       <slot />
