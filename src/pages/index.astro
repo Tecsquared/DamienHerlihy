@@ -1,10 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PostCardSmall from '../components/PostCardSmall.astro';
-import PostCardList from '../components/PostCardList.astro';
-import Sidebar from '../components/Sidebar.astro';
+import Universe from '../components/Universe.astro';
 import Subscribe from '../components/Subscribe.astro';
-import CardFan from '../components/CardFan.astro';
 import { getCollection } from 'astro:content';
 
 const allPosts = (await getCollection('posts')).sort(
@@ -12,208 +9,1220 @@ const allPosts = (await getCollection('posts')).sort(
 );
 
 const featuredPosts = allPosts.filter((p) => p.data.featured).slice(0, 3);
-const recentPosts = allPosts.slice(0, 3);
+const recentPosts = allPosts.slice(0, 8);
+
+const starPosts = allPosts.map((p) => ({
+  title: p.data.title,
+  slug: p.id,
+  tag: p.data.tag,
+  category: p.data.category,
+}));
+
+const counts = {
+  essays: allPosts.filter((p) => p.data.tag === 'Galaxy (Essay)').length,
+  notes: allPosts.filter((p) => p.data.tag === 'Star (Note)' || p.data.tag === 'Constellation (Pattern)').length,
+  library: allPosts.filter((p) => p.data.tag === 'Library').length,
+};
+
+const heroWords = [
+  { t: 'Damien' },
+  { t: 'is' },
+  { t: 'both' },
+  { t: 'a' },
+  { t: 'teacher', em: true },
+  { t: 'and' },
+  { t: 'a' },
+  { t: 'learner', em: true },
+  { t: 'of' },
+  { t: 'languages.' },
+];
+
+const manifesto =
+  'With notes, essays, and ideas, I am gradually constructing a thematic digital universe of knowledge. These reflections are ever-evolving — linked by association, published half-finished, left to grow. It is a pushback against the shit storm of inauthenticity crashing against the shores of the Internet.';
+const manifestoWords = manifesto.split(' ');
+
+const fieldGuide = [
+  {
+    num: '01',
+    name: 'Star',
+    alias: 'a note',
+    desc: 'Unstructured sparks — ideas I am still trying to figure out, published before they are polished.',
+    href: '/notes',
+    glyph: 'star',
+  },
+  {
+    num: '02',
+    name: 'Constellation',
+    alias: 'a pattern',
+    desc: 'Stars joined into shapes. When notes start pointing at each other, a theme emerges.',
+    href: '/notes',
+    glyph: 'constellation',
+  },
+  {
+    num: '03',
+    name: 'Galaxy',
+    alias: 'an essay',
+    desc: 'Longform pieces — whole regions of sky where constellations of thought hold together.',
+    href: '/essays',
+    glyph: 'galaxy',
+  },
+  {
+    num: '04',
+    name: 'Library',
+    alias: 'the sources',
+    desc: 'Books, articles, and blogs that lit the way here. Credit where the light came from.',
+    href: '/library',
+    glyph: 'library',
+  },
+];
+
+const categories = [
+  { name: 'AI & Teaching', slug: 'ai-and-teaching' },
+  { name: 'Personal Knowledge Mgt', slug: 'personal-knowledge-mgt' },
+  { name: 'Second Mountain', slug: 'second-mountain' },
+  { name: 'Learning How to Learn', slug: 'learning-how-to-learn' },
+  { name: 'Languages', slug: 'languages' },
+].map((c) => ({
+  ...c,
+  count: allPosts.filter((p) => p.data.category === c.name).length,
+}));
+
+function shortDate(d: Date) {
+  return d
+    .toLocaleDateString('en-AU', { month: 'short', year: 'numeric' })
+    .toUpperCase();
+}
+
+function tagLabel(tag: string) {
+  if (tag.startsWith('Galaxy')) return 'ESSAY';
+  if (tag.startsWith('Star')) return 'NOTE';
+  if (tag.startsWith('Constellation')) return 'PATTERN';
+  return 'LIBRARY';
+}
 ---
 
 <BaseLayout
-  title="Damien Herlihy is both a teacher and learner of languages"
-  description="Teacher, PKM Nerd, and Video Maker - when the stars align."
+  title="Damien Herlihy — A Digital Universe"
+  description="Teacher, PKM nerd, and video maker — when the stars align. A digital universe of notes, essays, and ideas about language teaching and learning."
 >
-  <!-- Hero -->
-  <section class="hero container">
-    <h1 class="hero-title">
-      <strong>Damien</strong> is both a teacher and a learner of languages.
-    </h1>
-    <h6 class="hero-subtitle">
-      Teacher, PKM Nerd, and Video Maker - when the stars align.
-    </h6>
-    <p class="hero-role">
-      Right now, I'm the Director of Studies at
-      <a
-        href="https://www.facebook.com/tectratenglish"
-        target="_blank"
-        rel="noopener noreferrer">Trat English Community</a
-      >.
-    </p>
-  </section>
+  <Universe posts={starPosts} />
 
-  <!-- The Universe -->
-  <section class="universe container">
-    <h2 class="universe-heading">The Universe</h2>
-    <p class="universe-description">
-      With notes, essays, and ideas, I am gradually constructing a thematic
-      digital universe of knowledge. These reflections are ever-evolving over
-      time. This project is a pushback against the shit storm of inauthenticity
-      that is crashing against the shores of the Internet.
-    </p>
-    <p class="universe-description">
-      I based this idea on the
-      <a href="https://maggieappleton.com/nontechnical-gardening" target="_blank" rel="noopener noreferrer">'Digital Garden'</a> movement.
-    </p>
-  </section>
-
-  <!-- State of Play Card Fan -->
-  {featuredPosts.length > 0 && (
-    <div class="card-fan-band">
-      <section class="card-fan-section container">
-        <h3 class="section-label">Galaxy (Essay)</h3>
-        <CardFan cards={featuredPosts.map((p) => ({
-          title: p.data.title,
-          slug: p.id,
-          image: p.data.image,
-        }))} />
-      </section>
-    </div>
-  )}
-
-  <!-- Scrolling Thumbnails Row -->
-  <section class="scroll-row container">
-    <h3 class="section-label">Star (Note)</h3>
-    <div class="scroll-row-inner">
-      {allPosts.slice(0, 6).map((post) => (
-        <PostCardSmall
-          title={post.data.title}
-          category={post.data.category}
-          slug={post.id}
-          image={post.data.image}
-        />
-      ))}
-    </div>
-  </section>
-
-  <!-- Blog List + Sidebar -->
-  <section class="blog-section container">
-    <div class="blog-list">
-      {recentPosts.map((post) => (
-        <div class="post-list-item" data-category={post.data.category}>
-          <PostCardList
-            title={post.data.title}
-            category={post.data.category}
-            date={post.data.date}
-            slug={post.id}
-            image={post.data.image}
-          />
-        </div>
-      ))}
-
-      <div class="see-all">
-        <a href="/essays" class="btn-primary">See All Posts</a>
+  <!-- ✦ HERO -->
+  <section class="hero">
+    <div class="hero-content container">
+      <p class="eyebrow hero-eyebrow" id="hero-eyebrow">A digital universe</p>
+      <h1 class="hero-title">
+        {heroWords.map((w) => (
+          <span class="hw"><span class:list={['hwi', { em: w.em }]}>{w.t}</span></span>
+        ))}
+      </h1>
+      <p class="hero-sub" id="hero-sub">
+        Teacher, PKM nerd, and video maker — when the stars align. Right now, I am the
+        Director of Studies at
+        <a
+          href="https://www.facebook.com/tectratenglish"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="link">Trat English Community</a
+        >.
+      </p>
+      <div class="hero-actions" id="hero-actions">
+        <a href="#universe" class="btn" data-magnetic>
+          Explore the universe
+          <span class="btn-orb">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M2 14 L14 2 M5 2 h9 v9"></path>
+            </svg>
+          </span>
+        </a>
+        <a href="/about" class="btn-ghost" data-magnetic>About me</a>
       </div>
     </div>
 
-    <Sidebar />
+    <aside class="hero-legend" id="hero-legend" aria-label="How to read the sky">
+      <span class="legend-line">EVERY GOLD STAR IS A POST</span>
+      <span class="legend-line legend-dim legend-pointer-only">HOVER TO READ &middot; CLICK TO TRAVEL</span>
+      <span class="legend-line legend-dim"
+        >{counts.essays} GALAXIES &middot; {counts.notes} STARS &middot; {counts.library} LIBRARY LIGHTS</span
+      >
+    </aside>
+
+    <div class="scroll-cue" id="scroll-cue" aria-hidden="true">
+      <span class="scroll-cue-label">Scroll</span>
+      <span class="scroll-cue-track"><span class="scroll-cue-dot"></span></span>
+    </div>
   </section>
 
-  <!-- Subscribe -->
-  <div class="container">
-    <Subscribe />
-  </div>
+  <!-- ✦ MANIFESTO -->
+  <section class="manifesto section" id="universe">
+    <div class="container">
+      <p class="eyebrow" data-reveal>Why this exists</p>
+      <p class="manifesto-text" id="manifesto-text">
+        {manifestoWords.map((w) => <span class="m-word">{w} </span>)}
+      </p>
+      <p class="manifesto-credit" data-reveal>
+        Rooted in
+        <a
+          href="https://maggieappleton.com/nontechnical-gardening"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="link">the digital garden movement</a
+        > — given a night sky instead of soil.
+      </p>
+    </div>
+  </section>
+
+  <!-- ✦ FIELD GUIDE -->
+  <section class="guide section">
+    <div class="container">
+      <div class="guide-head">
+        <p class="eyebrow" data-reveal>Field guide</p>
+        <h2 data-reveal data-reveal-delay="0.08">How to read this sky</h2>
+      </div>
+      <div class="guide-grid">
+        {fieldGuide.map((item, i) => (
+          <a
+            href={item.href}
+            class="guide-card spotlight-card"
+            data-reveal
+            data-reveal-delay={String(i * 0.08)}
+          >
+            <div class="guide-card-inner">
+              <span class="guide-num">{item.num}</span>
+              <span class:list={['guide-glyph', `glyph-${item.glyph}`]} aria-hidden="true">
+                {item.glyph === 'star' && (
+                  <svg viewBox="0 0 48 48" fill="none">
+                    <path
+                      d="M24 6 C25.5 16 32 22.5 42 24 C32 25.5 25.5 32 24 42 C22.5 32 16 25.5 6 24 C16 22.5 22.5 16 24 6 Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                )}
+                {item.glyph === 'constellation' && (
+                  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor">
+                    <path class="const-path" d="M8 36 L18 20 L30 26 L40 10" stroke-width="1" />
+                    <circle cx="8" cy="36" r="2.5" fill="currentColor" stroke="none" />
+                    <circle cx="18" cy="20" r="2.5" fill="currentColor" stroke="none" />
+                    <circle cx="30" cy="26" r="2.5" fill="currentColor" stroke="none" />
+                    <circle cx="40" cy="10" r="2.5" fill="currentColor" stroke="none" />
+                  </svg>
+                )}
+                {item.glyph === 'galaxy' && (
+                  <svg viewBox="0 0 48 48" fill="currentColor" class="galaxy-spin">
+                    <circle cx="24" cy="24" r="3" />
+                    <circle cx="33" cy="20" r="1.6" />
+                    <circle cx="29" cy="32" r="1.6" />
+                    <circle cx="15" cy="28" r="1.6" />
+                    <circle cx="19" cy="15" r="1.6" />
+                    <circle cx="39" cy="28" r="1.1" />
+                    <circle cx="24" cy="38" r="1.1" />
+                    <circle cx="9" cy="20" r="1.1" />
+                    <circle cx="28" cy="9" r="1.1" />
+                  </svg>
+                )}
+                {item.glyph === 'library' && (
+                  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4">
+                    <path class="lib-line" d="M10 40 V12" />
+                    <path class="lib-line" d="M18 40 V8" />
+                    <path class="lib-line" d="M26 40 V14" />
+                    <path class="lib-line" d="M37 40 L30 11" />
+                  </svg>
+                )}
+              </span>
+              <h3 class="guide-name">
+                {item.name} <em class="guide-alias">/ {item.alias}</em>
+              </h3>
+              <p class="guide-desc">{item.desc}</p>
+              <span class="guide-go">Enter <span class="guide-go-arrow">&rarr;</span></span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ✦ GALAXIES (featured essays) -->
+  <section class="galaxies section">
+    <div class="container">
+      <div class="galaxies-head">
+        <p class="eyebrow" data-reveal>Galaxies &middot; longform</p>
+        <h2 data-reveal data-reveal-delay="0.08">The deep sweeps of sky</h2>
+      </div>
+      <div class="g-rows" id="g-rows">
+        {featuredPosts.map((post, i) => (
+          <a
+            href={`/post/${post.id}`}
+            class="g-row"
+            data-image={post.data.image}
+            data-reveal
+            data-reveal-delay={String(i * 0.1)}
+          >
+            <span class="g-num">{String(i + 1).padStart(2, '0')}</span>
+            {post.data.image && (
+              <img class="g-thumb" src={post.data.image} alt="" loading="lazy" />
+            )}
+            <span class="g-body">
+              <span class="g-title">{post.data.title}</span>
+              <span class="g-meta">{post.data.category} &middot; {shortDate(post.data.date)}</span>
+            </span>
+            <span class="g-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M4 20 L20 4 M8 4 h12 v12"></path>
+              </svg>
+            </span>
+          </a>
+        ))}
+      </div>
+      <div class="galaxies-cta" data-reveal>
+        <a href="/essays" class="btn-ghost" data-magnetic>All essays</a>
+      </div>
+    </div>
+
+    <div class="g-preview" id="g-preview" aria-hidden="true">
+      <img id="g-preview-img" src="" alt="" />
+    </div>
+  </section>
+
+  <!-- ✦ FRESH LIGHT (recent posts, horizontal pan) -->
+  <section class="stars-section" id="stars">
+    <div class="stars-pin" id="stars-pin">
+      <div class="container stars-head">
+        <div>
+          <p class="eyebrow" data-reveal>Fresh light</p>
+          <h2 data-reveal data-reveal-delay="0.08">Recently arrived photons</h2>
+        </div>
+        <div class="stars-progress" aria-hidden="true">
+          <span class="stars-progress-bar" id="stars-progress-bar"></span>
+        </div>
+      </div>
+      <div class="stars-viewport">
+        <div class="stars-track" id="stars-track">
+          {recentPosts.map((post) => (
+            <a href={`/post/${post.id}`} class="note-card spotlight-card">
+              <span class="note-top">
+                <span class="note-glyph" aria-hidden="true">&#10022;</span>
+                <span class="note-meta">{tagLabel(post.data.tag)} &middot; {shortDate(post.data.date)}</span>
+              </span>
+              <span class="note-title">{post.data.title}</span>
+              <span class="note-bottom">
+                <span class="note-cat">{post.data.category}</span>
+                <span class="note-go" aria-hidden="true">&rarr;</span>
+              </span>
+            </a>
+          ))}
+          <a href="/notes" class="note-card note-card-end spotlight-card">
+            <span class="note-end-text">Browse every<br /><em>star</em> in the sky</span>
+            <span class="note-go" aria-hidden="true">&rarr;</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✦ CONSTELLATIONS (categories) -->
+  <section class="constellations section" id="constellations">
+    <div class="container const-grid">
+      <div class="const-intro">
+        <p class="eyebrow" data-reveal>Constellations</p>
+        <h2 data-reveal data-reveal-delay="0.08">Five fields of study</h2>
+        <p class="lede" data-reveal data-reveal-delay="0.16">
+          The recurring themes this universe keeps clustering around. Pick a constellation
+          and follow it across the sky.
+        </p>
+      </div>
+      <ul class="const-list">
+        {categories.map((cat, i) => (
+          <li data-reveal data-reveal-delay={String(i * 0.07)}>
+            <a href={`/category/${cat.slug}`} class="const-link">
+              <span class="const-star" aria-hidden="true">&#10022;</span>
+              <span class="const-name">{cat.name}</span>
+              <span class="const-count">{String(cat.count).padStart(2, '0')}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- ✦ TRANSMISSION -->
+  <section class="section subscribe-section">
+    <div class="container" data-reveal>
+      <Subscribe />
+    </div>
+  </section>
 </BaseLayout>
 
 <style>
-  /* Hero */
+  /* ===== Hero ===== */
   .hero {
-    padding-top: calc(var(--nav-height) + 40px);
-    padding-bottom: 20px;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    padding-bottom: clamp(90px, 14vh, 150px);
+  }
+
+  .hero-content {
+    width: 100%;
+  }
+
+  .hero-eyebrow,
+  .hero-sub,
+  .hero-actions,
+  .hero-legend {
+    opacity: 0;
+  }
+
+  html:not(.js) .hero-eyebrow,
+  html:not(.js) .hero-sub,
+  html:not(.js) .hero-actions,
+  html:not(.js) .hero-legend {
+    opacity: 1;
   }
 
   .hero-title {
-    font-size: 50px;
-    max-width: 800px;
-    margin-bottom: 20px;
+    font-size: clamp(46px, 7.4vw, 100px);
+    max-width: 13ch;
+    margin: 26px 0 30px;
   }
 
-  .hero-subtitle {
-    color: var(--color-text);
-    font-weight: 500;
-    margin-bottom: 12px;
+  .hw {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: bottom;
+    padding-bottom: 0.08em;
+    margin-bottom: -0.08em;
+    margin-right: 0.22em;
   }
 
-  .hero-role {
-    color: var(--color-text);
+  .hwi {
+    display: inline-block;
   }
 
-  /* Universe */
-  .universe {
-    padding: 40px var(--content-padding) 48px;
+  :global(html.js) .hwi {
+    transform: translateY(112%);
   }
 
-  .universe-heading {
-    font-size: 48px;
-    margin-bottom: 20px;
+  .hwi.em {
+    font-style: italic;
+    color: var(--gold);
   }
 
-  .universe-description {
-    max-width: 900px;
-    margin-bottom: 1em;
+  .hero-sub {
+    max-width: 48ch;
+    font-size: clamp(16px, 1.6vw, 19px);
+    color: var(--ink-dim);
+    margin-bottom: 38px;
   }
 
-  /* Section Labels */
-  .section-label {
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .hero-legend {
+    position: absolute;
+    right: var(--pad);
+    bottom: clamp(90px, 14vh, 150px);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 7px;
+    text-align: right;
+  }
+
+  .legend-line {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    color: var(--gold);
+  }
+
+  .legend-dim {
+    color: var(--ink-faint);
+  }
+
+  /* Touch screens get no hover — don't promise one */
+  @media (hover: none) {
+    .legend-pointer-only {
+      display: none;
+    }
+  }
+
+  .scroll-cue {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 26px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: opacity 0.6s var(--ease);
+  }
+
+  :global(body.has-scrolled) .scroll-cue {
+    opacity: 0;
+  }
+
+  .scroll-cue-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: var(--color-text-light);
-    margin-bottom: 16px;
+    color: var(--ink-faint);
   }
 
-  /* Card Fan */
-  .card-fan-band {
-    background-color: #f5f5f5;
-    padding: 20px 0;
-    margin-bottom: 0;
-  }
-
-  .card-fan-section {
-    text-align: center;
-  }
-
-  /* Scroll Row */
-  .scroll-row {
-    margin-top: 40px;
-    margin-bottom: 48px;
+  .scroll-cue-track {
+    width: 1px;
+    height: 44px;
+    background: var(--hairline-strong);
+    position: relative;
     overflow: hidden;
   }
 
-  .scroll-row-inner {
-    display: flex;
-    gap: 24px;
-    overflow-x: auto;
-    padding: 16px 0;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+  .scroll-cue-dot {
+    position: absolute;
+    left: -1.5px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: cue-fall 2.2s var(--ease) infinite;
   }
 
-  .scroll-row-inner::-webkit-scrollbar {
+  @keyframes cue-fall {
+    0% {
+      top: -6px;
+      opacity: 0;
+    }
+    25% {
+      opacity: 1;
+    }
+    85% {
+      opacity: 1;
+    }
+    100% {
+      top: 46px;
+      opacity: 0;
+    }
+  }
+
+  /* ===== Manifesto ===== */
+  .manifesto-text {
+    font-family: var(--font-display);
+    font-size: clamp(26px, 3.7vw, 46px);
+    line-height: 1.42;
+    max-width: 1020px;
+    margin: 34px 0 30px;
+    text-wrap: pretty;
+  }
+
+  .m-word {
+    color: #45424e;
+    transition: color 0.2s linear;
+  }
+
+  html:not(.js) .m-word {
+    color: var(--ink);
+  }
+
+  .manifesto-credit {
+    font-size: 16px;
+    color: var(--ink-faint);
+    max-width: 50ch;
+  }
+
+  /* ===== Field guide ===== */
+  .guide-head {
+    margin-bottom: clamp(40px, 6vw, 70px);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .guide-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+  }
+
+  .guide-card {
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    background: rgba(13, 13, 20, 0.62);
+    padding: 8px;
+    transition:
+      border-color 0.5s var(--ease),
+      transform 0.5s var(--ease);
+  }
+
+  @media (min-width: 901px) {
+    .guide-card:nth-child(2),
+    .guide-card:nth-child(4) {
+      margin-top: 34px;
+    }
+  }
+
+  .guide-card:hover {
+    border-color: var(--hairline-strong);
+  }
+
+  .guide-card-inner {
+    border: 1px solid var(--hairline);
+    border-radius: calc(var(--r-lg) - 8px);
+    padding: clamp(26px, 3.4vw, 44px);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .guide-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faint);
+    margin-bottom: 36px;
+  }
+
+  .guide-glyph {
+    width: 48px;
+    height: 48px;
+    color: var(--gold);
+    margin-bottom: 22px;
+  }
+
+  .glyph-star svg {
+    animation: star-breathe 3.4s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  @keyframes star-breathe {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.85;
+    }
+    50% {
+      transform: scale(1.14);
+      opacity: 1;
+    }
+  }
+
+  .const-path {
+    stroke-dasharray: 70;
+    stroke-dashoffset: 70;
+    transition: stroke-dashoffset 1.4s var(--ease);
+  }
+
+  .guide-card:hover .const-path,
+  .guide-card.in-view .const-path {
+    stroke-dashoffset: 0;
+  }
+
+  .galaxy-spin {
+    animation: galaxy-rotate 26s linear infinite;
+    transform-origin: center;
+  }
+
+  @keyframes galaxy-rotate {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .lib-line {
+    transition: transform 0.5s var(--ease);
+    transform-origin: bottom center;
+  }
+
+  .guide-card:hover .lib-line:nth-child(1) {
+    transform: translateY(-3px);
+  }
+  .guide-card:hover .lib-line:nth-child(3) {
+    transform: translateY(-5px);
+  }
+
+  .guide-name {
+    font-size: clamp(24px, 2.6vw, 32px);
+    margin-bottom: 12px;
+  }
+
+  .guide-alias {
+    font-style: italic;
+    color: var(--ink-faint);
+    font-size: 0.65em;
+  }
+
+  .guide-desc {
+    color: var(--ink-dim);
+    font-size: 16px;
+    max-width: 40ch;
+    margin-bottom: 30px;
+  }
+
+  .guide-go {
+    margin-top: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: inline-flex;
+    gap: 8px;
+  }
+
+  .guide-go-arrow {
+    transition: transform 0.4s var(--ease);
+  }
+
+  .guide-card:hover .guide-go-arrow {
+    transform: translateX(6px);
+  }
+
+  /* ===== Galaxies rows ===== */
+  .galaxies-head {
+    margin-bottom: clamp(36px, 5vw, 60px);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .g-rows {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .g-row {
+    display: flex;
+    align-items: center;
+    gap: clamp(18px, 3vw, 44px);
+    padding: clamp(26px, 3.6vw, 46px) 6px;
+    border-bottom: 1px solid var(--hairline);
+    position: relative;
+    transition: padding-left 0.5s var(--ease);
+  }
+
+  .g-row::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    height: 1px;
+    width: 100%;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.7s var(--ease);
+  }
+
+  .g-row:hover {
+    padding-left: clamp(10px, 1.6vw, 24px);
+  }
+
+  .g-row:hover::after {
+    transform: scaleX(1);
+  }
+
+  .g-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    flex-shrink: 0;
+  }
+
+  .g-thumb {
     display: none;
   }
 
-  /* Blog Section */
-  .blog-section {
-    display: grid;
-    grid-template-columns: 1fr 280px;
-    gap: 60px;
-    margin-bottom: 40px;
+  .g-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
   }
 
-  .see-all {
-    margin-top: 32px;
-    max-width: 500px;
+  .g-title {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 3.4vw, 44px);
+    line-height: 1.15;
+    color: var(--ink);
+    transition: color 0.4s var(--ease);
+  }
+
+  .g-row:hover .g-title {
+    color: var(--gold-bright);
+  }
+
+  .g-meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .g-arrow {
+    margin-left: auto;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--hairline-strong);
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--ink-dim);
+    transition:
+      background-color 0.45s var(--ease),
+      color 0.45s var(--ease),
+      transform 0.45s var(--ease);
+  }
+
+  .g-arrow svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .g-row:hover .g-arrow {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--bg-deep);
+    transform: rotate(45deg);
+  }
+
+  .galaxies-cta {
+    margin-top: 44px;
+  }
+
+  .g-preview {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 50;
+    width: 320px;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--r-md);
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+    border: 1px solid var(--hairline-strong);
+    transform: rotate(-3deg);
+    will-change: transform;
+  }
+
+  .g-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* ===== Fresh light (horizontal) ===== */
+  .stars-section {
+    position: relative;
+  }
+
+  .stars-pin {
+    padding: clamp(90px, 11vw, 150px) 0;
+    overflow: hidden;
+  }
+
+  .stars-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 30px;
+    margin-bottom: clamp(36px, 5vw, 60px);
+  }
+
+  .stars-head > div {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .stars-progress {
+    width: clamp(120px, 18vw, 260px);
+    height: 1px;
+    background: var(--hairline);
+    position: relative;
+    margin-bottom: 14px;
+  }
+
+  .stars-progress-bar {
+    position: absolute;
+    inset: 0;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  .stars-viewport {
+    overflow: visible;
+  }
+
+  .stars-track {
+    display: flex;
+    gap: 20px;
+    padding-left: max(var(--pad), calc((100vw - var(--max-width)) / 2 + var(--pad)));
+    padding-right: var(--pad);
+    width: max-content;
+  }
+
+  .note-card {
+    width: clamp(280px, 26vw, 360px);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 30px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    background: rgba(13, 13, 20, 0.72);
+    transition:
+      border-color 0.5s var(--ease),
+      transform 0.5s var(--ease);
+  }
+
+  .note-card:hover {
+    border-color: var(--gold-dim);
+    transform: translateY(-6px);
+  }
+
+  .note-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .note-glyph {
+    color: var(--gold);
+    font-size: 15px;
+  }
+
+  .note-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faint);
+  }
+
+  .note-title {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 2vw, 26px);
+    line-height: 1.25;
+    color: var(--ink);
+    min-height: 3.6em;
+  }
+
+  .note-card:hover .note-title {
+    color: var(--gold-bright);
+    transition: color 0.4s var(--ease);
+  }
+
+  .note-bottom {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .note-cat {
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+
+  .note-go {
+    color: var(--gold);
+    transition: transform 0.4s var(--ease);
+  }
+
+  .note-card:hover .note-go {
+    transform: translateX(6px);
+  }
+
+  .note-card-end {
+    justify-content: center;
+    align-items: flex-start;
+    gap: 24px;
+    background: var(--gold-glow);
+    border-color: var(--gold-dim);
+  }
+
+  .note-end-text {
+    font-family: var(--font-display);
+    font-size: 26px;
+    line-height: 1.3;
+    color: var(--ink);
+  }
+
+  .note-end-text em {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  /* ===== Constellations ===== */
+  .const-grid {
+    display: grid;
+    grid-template-columns: 5fr 7fr;
+    gap: clamp(40px, 6vw, 90px);
+    align-items: start;
+  }
+
+  .const-intro {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    position: sticky;
+    top: calc(var(--nav-h) + 40px);
+  }
+
+  .const-list {
+    list-style: none;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .const-link {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: clamp(20px, 2.6vw, 32px) 4px;
+    border-bottom: 1px solid var(--hairline);
+    transition: padding-left 0.5s var(--ease);
+  }
+
+  .const-link:hover {
+    padding-left: 18px;
+  }
+
+  .const-star {
+    color: var(--gold);
+    font-size: 14px;
+    opacity: 0;
+    transform: scale(0.4) rotate(-60deg);
+    transition:
+      opacity 0.4s var(--ease),
+      transform 0.5s var(--ease);
+  }
+
+  .const-link:hover .const-star {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+
+  .const-name {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 3vw, 38px);
+    color: var(--ink);
+    transition: color 0.4s var(--ease);
+  }
+
+  .const-link:hover .const-name {
+    color: var(--gold-bright);
+    font-style: italic;
+  }
+
+  .const-count {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+
+  .subscribe-section {
+    padding-top: 0;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 900px) {
+    .guide-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .const-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .const-intro {
+      position: static;
+    }
   }
 
   @media (max-width: 768px) {
-    .hero-title {
-      font-size: 36px;
+    .hero {
+      padding-bottom: 110px;
     }
 
-    .universe-heading {
-      font-size: 36px;
+    .hero-legend {
+      position: static;
+      align-items: flex-start;
+      text-align: left;
+      margin-top: 40px;
+      padding-left: var(--pad);
     }
 
-    .blog-section {
-      grid-template-columns: 1fr;
-      gap: 40px;
+    .g-row {
+      flex-wrap: wrap;
+    }
+
+    .g-thumb {
+      display: block;
+      width: 84px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--hairline);
+      flex-shrink: 0;
+    }
+
+    .g-arrow {
+      display: none;
+    }
+
+    .stars-viewport {
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .stars-viewport::-webkit-scrollbar {
+      display: none;
+    }
+
+    .stars-track {
+      padding-left: var(--pad);
+    }
+
+    .note-title {
+      min-height: 0;
+    }
+
+    .stars-progress {
+      display: none;
     }
   }
 </style>
+
+<script>
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const finePointer = window.matchMedia('(pointer: fine)').matches;
+
+  /* ---- Hero entrance ---- */
+  if (!reducedMotion) {
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    tl.to('#hero-eyebrow', { opacity: 1, duration: 1 }, 0.2)
+      .to('.hwi', { y: 0, duration: 1.1, stagger: 0.055, ease: 'power4.out' }, 0.35)
+      .to('#hero-sub', { opacity: 1, duration: 1.2 }, 1.0)
+      .to('#hero-actions', { opacity: 1, duration: 1.2 }, 1.15)
+      .to('#hero-legend', { opacity: 1, duration: 1.4 }, 1.5);
+
+    /* Hero drifts up and fades as you leave it */
+    gsap.to('.hero-content', {
+      y: -90,
+      opacity: 0,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: '.hero',
+        start: 'top top',
+        end: 'bottom 35%',
+        scrub: true,
+      },
+    });
+  } else {
+    gsap.set('#hero-eyebrow, #hero-sub, #hero-actions, #hero-legend', { opacity: 1 });
+    gsap.set('.hwi', { y: 0 });
+  }
+
+  /* ---- Manifesto: words illuminate on scroll ---- */
+  if (!reducedMotion) {
+    gsap.to('.m-word', {
+      color: '#eceae3',
+      stagger: 0.06,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: '#manifesto-text',
+        start: 'top 82%',
+        end: 'bottom 45%',
+        scrub: 0.6,
+      },
+    });
+  } else {
+    document
+      .querySelectorAll<HTMLElement>('.m-word')
+      .forEach((w) => (w.style.color = '#eceae3'));
+  }
+
+  /* ---- Constellation glyph draws itself when seen ---- */
+  document.querySelectorAll('.guide-card').forEach((card) => {
+    ScrollTrigger.create({
+      trigger: card,
+      start: 'top 75%',
+      once: true,
+      onEnter: () => card.classList.add('in-view'),
+    });
+  });
+
+  /* ---- Galaxy rows: cursor-following preview ---- */
+  if (!reducedMotion && finePointer) {
+    const preview = document.getElementById('g-preview')!;
+    const previewImg = document.getElementById('g-preview-img') as HTMLImageElement;
+    const rows = document.querySelectorAll<HTMLElement>('.g-row');
+    const xTo = gsap.quickTo(preview, 'x', { duration: 0.55, ease: 'power3.out' });
+    const yTo = gsap.quickTo(preview, 'y', { duration: 0.55, ease: 'power3.out' });
+    gsap.set(preview, { xPercent: 8, yPercent: -50 });
+
+    rows.forEach((row) => {
+      row.addEventListener('pointerenter', () => {
+        const src = row.dataset.image;
+        if (!src) return;
+        previewImg.src = src;
+        gsap.to(preview, { opacity: 1, scale: 1, rotate: -3, duration: 0.45, ease: 'power3.out' });
+      });
+      row.addEventListener('pointerleave', () => {
+        gsap.to(preview, { opacity: 0, scale: 0.92, rotate: 2, duration: 0.4, ease: 'power3.out' });
+      });
+      row.addEventListener('pointermove', (e) => {
+        xTo(e.clientX);
+        yTo(e.clientY);
+      });
+    });
+  }
+
+  /* ---- Fresh light: vertical scroll pans the track sideways (desktop) ---- */
+  const mm = gsap.matchMedia();
+  mm.add('(min-width: 769px) and (prefers-reduced-motion: no-preference)', () => {
+    const track = document.getElementById('stars-track')!;
+    const pin = document.getElementById('stars-pin')!;
+    const bar = document.getElementById('stars-progress-bar')!;
+    const distance = () => track.scrollWidth - window.innerWidth;
+
+    const tween = gsap.to(track, {
+      x: () => -distance(),
+      ease: 'none',
+      scrollTrigger: {
+        trigger: pin,
+        start: 'top top',
+        end: () => `+=${distance()}`,
+        pin: true,
+        scrub: 0.7,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          bar.style.transform = `scaleX(${self.progress})`;
+        },
+      },
+    });
+
+    return () => {
+      tween.scrollTrigger?.kill();
+      tween.kill();
+    };
+  });
+</script>

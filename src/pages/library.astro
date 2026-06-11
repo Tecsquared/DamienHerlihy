@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
 import PostCardGrid from '../components/PostCardGrid.astro';
 import { getCollection } from 'astro:content';
 
@@ -8,44 +9,51 @@ const posts = (await getCollection('posts'))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 ---
 
-<BaseLayout title="Library - Damien Herlihy">
-  <section class="grid-page container page-content">
-    <h1>Library</h1>
-    <p class="grid-description">
-      Books, articles, and blogs I've read that gave me insights on topics of
-      interests.
-    </p>
-    <div class="post-grid cols-3">
-      {posts.map((post) => (
-        <PostCardGrid
-          title={post.data.title}
-          category={post.data.category}
-          date={post.data.date}
-          slug={post.id}
-          image={post.data.image}
-        />
-      ))}
+<BaseLayout
+  title="Library — Damien Herlihy"
+  description="The Library: books, articles, and blogs that lit the way — sources behind this digital universe."
+>
+  <section class="container page-content">
+    <PageHero
+      eyebrow={`Library · ${posts.length} lights`}
+      description="Books, articles, and blogs that gave me insight — credit where the light came from."
+    >
+      Where the light <em>came from</em>
+    </PageHero>
+
+    <div class="post-grid">
+      {
+        posts.map((post, i) => (
+          <div data-reveal data-reveal-delay={String((i % 3) * 0.08)}>
+            <PostCardGrid
+              title={post.data.title}
+              category={post.data.category}
+              date={post.data.date}
+              slug={post.id}
+              image={post.data.image}
+            />
+          </div>
+        ))
+      }
     </div>
   </section>
 </BaseLayout>
 
 <style>
-  .grid-description {
-    margin: 16px 0 48px;
-    max-width: 700px;
-  }
-
   .post-grid {
     display: grid;
-    gap: 30px;
-  }
-
-  .cols-3 {
     grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
   }
 
-  @media (max-width: 768px) {
-    .cols-3 {
+  @media (max-width: 1024px) {
+    .post-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 700px) {
+    .post-grid {
       grid-template-columns: 1fr;
     }
   }

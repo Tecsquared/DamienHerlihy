@@ -4,33 +4,33 @@ interface Props {
   variant?: 'light' | 'dark';
 }
 
-const { category, variant = 'light' } = Astro.props;
+const { category } = Astro.props;
 ---
 
-<span class:list={['category-tag', `category-tag--${variant}`]}>
+<span class="category-tag">
+  <span class="category-tag-star" aria-hidden="true">&#10022;</span>
   {category}
 </span>
 
 <style>
   .category-tag {
-    display: inline-block;
-    font-family: var(--font-body);
-    font-size: 11px;
-    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 6px 10px;
-    border-radius: 4px;
+    letter-spacing: 0.16em;
+    padding: 5px 12px;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    color: var(--ink-dim);
     white-space: nowrap;
   }
 
-  .category-tag--light {
-    background: var(--color-tag-bg);
-    color: var(--color-black);
-  }
-
-  .category-tag--dark {
-    background: #ffffff;
-    color: var(--color-black);
+  .category-tag-star {
+    color: var(--gold);
+    font-size: 9px;
   }
 </style>

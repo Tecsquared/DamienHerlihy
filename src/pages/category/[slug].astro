@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/PageHero.astro';
 import PostCardList from '../../components/PostCardList.astro';
 import Sidebar from '../../components/Sidebar.astro';
 import { getCollection } from 'astro:content';
@@ -30,26 +31,39 @@ const posts = (await getCollection('posts'))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 ---
 
-<BaseLayout title={`${category.name} - Damien Herlihy`}>
-  <section class="category-page container page-content">
-    <h1>{category.name}</h1>
+<BaseLayout
+  title={`${category.name} — Damien Herlihy`}
+  description={`Every post in the ${category.name} constellation.`}
+>
+  <section class="container page-content">
+    <PageHero eyebrow={`Constellation · ${posts.length} ${posts.length === 1 ? 'star' : 'stars'}`}>
+      {category.name}
+    </PageHero>
 
     <div class="category-layout">
       <div class="category-posts">
-        {posts.map((post) => (
-          <div class="post-list-item" data-category={post.data.category}>
-            <PostCardList
-              title={post.data.title}
-              category={post.data.category}
-              date={post.data.date}
-              slug={post.id}
-              image={post.data.image}
-            />
-          </div>
-        ))}
-        {posts.length === 0 && (
-          <p class="no-posts">No posts in this category yet.</p>
-        )}
+        {
+          posts.map((post, i) => (
+            <div data-reveal data-reveal-delay={String(Math.min(i * 0.06, 0.3))}>
+              <PostCardList
+                title={post.data.title}
+                category={post.data.category}
+                date={post.data.date}
+                slug={post.id}
+                image={post.data.image}
+              />
+            </div>
+          ))
+        }
+        {
+          posts.length === 0 && (
+            <div class="no-posts">
+              <span class="no-posts-glyph" aria-hidden="true">&#10022;</span>
+              <p>This patch of sky is still dark — no stars here yet.</p>
+              <a href="/notes" class="btn-ghost">Browse the notes instead</a>
+            </div>
+          )
+        }
       </div>
 
       <Sidebar activeCategory={category.name} />
@@ -61,20 +75,30 @@ const posts = (await getCollection('posts'))
   .category-layout {
     display: grid;
     grid-template-columns: 1fr 280px;
-    gap: 60px;
-    margin-top: 40px;
+    gap: clamp(40px, 6vw, 80px);
+  }
+
+  .category-posts > div:first-child :global(.list-row) {
+    border-top: 1px solid var(--hairline);
   }
 
   .no-posts {
-    color: var(--color-text-light);
-    font-size: 16px;
-    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 40px 0;
+    color: var(--ink-faint);
   }
 
-  @media (max-width: 768px) {
+  .no-posts-glyph {
+    color: var(--gold);
+    font-size: 22px;
+  }
+
+  @media (max-width: 900px) {
     .category-layout {
       grid-template-columns: 1fr;
-      gap: 40px;
     }
   }
 </style>

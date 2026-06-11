@@ -7,31 +7,90 @@ interface Props {
 
 const {
   email = 'damien@languagelayouts.com',
-  heading = 'Contact Me',
-  description = 'If you would like to discuss any of my topics of interest, collaborate on a project or be coached, please drop me an email.',
+  heading = 'Send a signal',
+  description = 'If you would like to discuss any of my topics of interest, collaborate on a project, or be coached — drop me a line.',
 } = Astro.props;
 ---
 
 <div class="contact-section">
   {heading && <h2 class="contact-heading">{heading}</h2>}
   {description && <p class="contact-description">{description}</p>}
-  <form class="contact-form" data-email={email}>
-    <input type="text" placeholder="Name" class="form-field" name="name" required />
-    <input type="email" placeholder="Email" class="form-field" name="email" required />
-    <textarea placeholder="Message" class="form-field form-textarea" name="message" rows="6" required></textarea>
-    <button type="submit" class="btn-primary">Submit</button>
+
+  <form class="contact-form" data-email={email} novalidate>
+    <div class="contact-row">
+      <div class="field-block">
+        <label class="field-label" for="cf-name">Name</label>
+        <input type="text" id="cf-name" class="field" name="name" placeholder="Your name" required />
+        <span class="field-error">A name helps me reply like a human.</span>
+      </div>
+      <div class="field-block">
+        <label class="field-label" for="cf-email">Email</label>
+        <input
+          type="email"
+          id="cf-email"
+          class="field"
+          name="email"
+          placeholder="you@example.com"
+          required
+        />
+        <span class="field-error">That email does not look quite right.</span>
+      </div>
+    </div>
+    <div class="field-block">
+      <label class="field-label" for="cf-message">Message</label>
+      <textarea
+        id="cf-message"
+        class="field contact-textarea"
+        name="message"
+        rows="6"
+        placeholder="What is on your mind?"
+        required></textarea>
+      <span class="field-error">An empty message travels badly across space.</span>
+    </div>
+    <div class="contact-actions">
+      <button type="submit" class="btn" data-magnetic>
+        Send message
+        <span class="btn-orb">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M2 14 L14 2 M5 2 h9 v9"></path>
+          </svg>
+        </span>
+      </button>
+      <span class="contact-note">Opens your email app — no tracking, no list.</span>
+    </div>
   </form>
 </div>
 
 <script>
-  document.querySelectorAll('.contact-form').forEach(form => {
+  document.querySelectorAll<HTMLFormElement>('.contact-form').forEach((form) => {
+    const blocks = form.querySelectorAll<HTMLElement>('.field-block');
+
+    function validate(): boolean {
+      let ok = true;
+      blocks.forEach((block) => {
+        const field = block.querySelector<HTMLInputElement | HTMLTextAreaElement>('.field')!;
+        const bad =
+          !field.value.trim() ||
+          (field.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value));
+        block.classList.toggle('has-error', bad);
+        if (bad) ok = false;
+      });
+      return ok;
+    }
+
+    blocks.forEach((block) => {
+      block.querySelector('.field')!.addEventListener('input', () => {
+        block.classList.remove('has-error');
+      });
+    });
+
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const f = e.currentTarget as HTMLFormElement;
-      const email = f.dataset.email;
-      const name = (f.querySelector('[name="name"]') as HTMLInputElement).value;
-      const fromEmail = (f.querySelector('[name="email"]') as HTMLInputElement).value;
-      const message = (f.querySelector('[name="message"]') as HTMLTextAreaElement).value;
+      if (!validate()) return;
+      const email = form.dataset.email;
+      const name = (form.querySelector('[name="name"]') as HTMLInputElement).value;
+      const fromEmail = (form.querySelector('[name="email"]') as HTMLInputElement).value;
+      const message = (form.querySelector('[name="message"]') as HTMLTextAreaElement).value;
       const subject = encodeURIComponent(`Message from ${name}`);
       const body = encodeURIComponent(`From: ${name} (${fromEmail})\n\n${message}`);
       window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
@@ -45,44 +104,51 @@ const {
   }
 
   .contact-heading {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
 
   .contact-description {
-    color: var(--color-text);
-    margin-bottom: 32px;
-    line-height: 1.6;
+    color: var(--ink-dim);
+    margin-bottom: 36px;
+    max-width: 52ch;
   }
 
   .contact-form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 22px;
     max-width: 700px;
   }
 
-  .form-field {
-    padding: 16px 18px;
-    background: #f8f8f8;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    font-family: var(--font-body);
-    font-size: 16px;
-    color: var(--color-black);
-    outline: none;
-    transition: border-color .25s cubic-bezier(.25, .46, .45, .94);
+  .contact-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
   }
 
-  .form-field::placeholder {
-    color: var(--color-text-light);
-  }
-
-  .form-field:focus {
-    border-color: #afafaf;
-  }
-
-  .form-textarea {
+  .contact-textarea {
     resize: vertical;
     min-height: 150px;
+  }
+
+  .contact-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .contact-note {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 600px) {
+    .contact-row {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

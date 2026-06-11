@@ -1,43 +1,48 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
 import Subscribe from '../components/Subscribe.astro';
 import ContactForm from '../components/ContactForm.astro';
 ---
 
-<BaseLayout title="About - Damien Herlihy">
+<BaseLayout
+  title="About — Damien Herlihy"
+  description="Who is behind this digital universe — backstory, bookends, and the pushback against an inauthentic Internet."
+>
   <section class="about-page container page-content">
-    <h1>About</h1>
+    <div class="about-narrow">
+      <PageHero eyebrow="The observer" description="No more concealing myself under the aliases of TEC squared, English Riot, or The Riot Way.">
+        I am <em>Damien Herlihy</em>
+      </PageHero>
+    </div>
 
-    <div class="about-prose">
+    <div class="about-prose prose" data-reveal>
       <p>
-        During the last few years, I've been experiencing a mounting sense of
-        anxiety about the inauthenticity of the Internet and the effects it's
-        been having on me personally.
+        During the last few years, I've been experiencing a mounting sense of anxiety about
+        the inauthenticity of the Internet and the effects it's been having on me personally.
       </p>
       <p>
         But I digress. This is an 'About' page. So, let's start with me.
-        No more concealing myself under the aliases of TEC squared, English Riot
-        or The Riot Way; I am Damien Herlihy.
       </p>
     </div>
 
     <div class="about-images">
-      <div class="about-image-wrapper">
+      <figure class="about-image-wrapper" data-reveal>
         <div class="about-image" style="background-image: url(/images/about/authentic.jpeg)"></div>
-        <span class="about-caption">A KIND OF AUTHENTIC PICTURE OF ME</span>
-      </div>
-      <div class="about-image-wrapper">
+        <figcaption class="about-caption">A kind of authentic picture of me</figcaption>
+      </figure>
+      <figure class="about-image-wrapper" data-reveal data-reveal-delay="0.12">
         <div class="about-image" style="background-image: url(/images/about/inauthentic.jpeg)"></div>
-        <span class="about-caption">A KIND OF INAUTHENTIC PICTURE OF ME</span>
-      </div>
+        <figcaption class="about-caption">A kind of inauthentic picture of me</figcaption>
+      </figure>
     </div>
 
-    <div class="about-prose">
+    <div class="about-prose prose" data-reveal>
       <h2>Backstory</h2>
       <p>
-        Having been born and raised in Brisbane, Australia, I eventually returned
-        to live there - bookends bring a sense of closure, don't they? Everybody
-        loves a neatly wrapped package. And here's mine:
+        Having been born and raised in Brisbane, Australia, I eventually returned to live
+        there - bookends bring a sense of closure, don't they? Everybody loves a neatly
+        wrapped package. And here's mine:
       </p>
 
       <h3>Bookend</h3>
@@ -56,156 +61,127 @@ import ContactForm from '../components/ContactForm.astro';
       <h3>Bookend</h3>
     </div>
 
-    <Subscribe />
+    <div class="about-subscribe" data-reveal>
+      <Subscribe />
+    </div>
 
-    <div class="about-prose">
+    <div class="about-prose prose" data-reveal>
       <h2>Now</h2>
       <p>
-        So now I run the school remotely&mdash;a silver lining of the pandemic. I
-        rebuilt my mental health over a year or two. These days I channel that energy
-        into <a href="https://www.languagelayouts.com" target="_blank" class="link">Language Layouts</a>&mdash;Notion
-        templates for teachers and learners who want a system that actually works.
-        And then there's this project!
+        So now I run the school remotely&mdash;a silver lining of the pandemic. I rebuilt my
+        mental health over a year or two. These days I channel that energy into
+        <a href="https://www.languagelayouts.com" target="_blank" rel="noopener noreferrer">Language Layouts</a>&mdash;Notion
+        templates for teachers and learners who want a system that actually works. And then
+        there's this project!
       </p>
       <p>
-        Let's return to my opening statement. My unease over the coming
-        shitstorm of inauthenticity on the Internet - aided and abetted by AI.
-        Content is forever being dumbised, optimised, or algorithmised for likes,
-        shares and subscribes. Don't get me wrong I was in there - getting my
-        hands dirty - for a slice of that eyeball pie. And maybe I'd still been
-        in there if I had been successful at it. The thing is though, AI is going
-        to speed up this content treadmill exponentially. If things seem
-        inauthentic now, you ain't seen nothing yet...
+        Let's return to my opening statement. My unease over the coming shitstorm of
+        inauthenticity on the Internet - aided and abetted by AI. Content is forever being
+        dumbised, optimised, or algorithmised for likes, shares and subscribes. Don't get me
+        wrong I was in there - getting my hands dirty - for a slice of that eyeball pie. And
+        maybe I'd still been in there if I had been successful at it. The thing is though, AI
+        is going to speed up this content treadmill exponentially. If things seem inauthentic
+        now, you ain't seen nothing yet...
       </p>
       <p>
-        So, I had a hit wall with the current paradigm of content creation and I
-        wasn't sure what was next... Until I stumbled upon
-        Maggie Appleton and the
-        <a href="https://maggieappleton.com/garden-history" target="_blank" class="link">'Digital Garden'</a>
+        So, I had a hit wall with the current paradigm of content creation and I wasn't sure
+        what was next... Until I stumbled upon Maggie Appleton and the
+        <a href="https://maggieappleton.com/garden-history" target="_blank" rel="noopener noreferrer">'Digital Garden'</a>
         movement. Appleton described a 'Digital Garden' as follows:
       </p>
       <blockquote>
-        A garden is a collection of evolving ideas that aren't strictly organised
-        by their publication date. They're inherently exploratory &ndash; notes are
-        linked through contextual associations. They aren't refined or complete -
-        notes are published as half-finished thoughts that will grow and evolve
-        over time. They're less rigid, less performative, and less perfect than
-        the personal websites we're used to seeing.
+        A garden is a collection of evolving ideas that aren't strictly organised by their
+        publication date. They're inherently exploratory &ndash; notes are linked through
+        contextual associations. They aren't refined or complete - notes are published as
+        half-finished thoughts that will grow and evolve over time. They're less rigid, less
+        performative, and less perfect than the personal websites we're used to seeing.
       </blockquote>
       <p>
-        This articulated a vision for my unease. A place to still create and
-        share, but without the inauthenticity of social media. I've borrowed
-        heavily from Maggie's format for a 'Digital Garden', but decided to give
-        my garden a space theme. Instead of a garden populated by seeds, buds,
-        and evergreens, I have a digital universe with stars/notes,
-        constellations/patterns, and galaxies/essays. Let the countdown begin.
+        This articulated a vision for my unease. A place to still create and share, but
+        without the inauthenticity of social media. I've borrowed heavily from Maggie's
+        format for a 'Digital Garden', but decided to give my garden a space theme. Instead
+        of a garden populated by seeds, buds, and evergreens, I have a digital universe with
+        stars/notes, constellations/patterns, and galaxies/essays. Let the countdown begin.
       </p>
     </div>
 
-    <div class="about-contact">
+    <div class="about-contact" data-reveal>
       <ContactForm />
     </div>
   </section>
 </BaseLayout>
 
 <style>
-  .about-page h1 {
-    max-width: 700px;
+  .about-narrow,
+  .about-prose,
+  .about-subscribe,
+  .about-contact {
+    max-width: 760px;
     margin-left: auto;
     margin-right: auto;
   }
 
   .about-prose {
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 40px;
+    margin-bottom: 48px;
   }
 
-  .about-prose p {
-    margin-bottom: 1.2em;
-  }
-
-  .about-prose h2 {
-    margin-top: 2em;
-    margin-bottom: 0.5em;
-  }
-
-  .about-prose h3 {
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
-  }
-
-  .about-prose ul {
-    list-style: disc;
-    padding-left: 1.5em;
-    margin: 1em 0;
-  }
-
-  .about-prose li {
-    margin-bottom: 1em;
-    line-height: 1.6;
-  }
-
-  .about-prose blockquote {
-    border-left: 3px solid var(--color-border);
-    padding-left: 20px;
-    margin: 1.5em 0;
-    font-style: italic;
-    color: var(--color-text);
+  .about-subscribe {
+    margin-top: 60px;
+    margin-bottom: 60px;
   }
 
   .about-images {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin: 40px auto;
-    max-width: 700px;
+    gap: 22px;
+    margin: 48px auto 56px;
+    max-width: 760px;
   }
 
   .about-image-wrapper {
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--radius);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    padding: 8px;
+    background: rgba(13, 13, 20, 0.62);
+    transition:
+      border-color 0.5s var(--ease),
+      transform 0.5s var(--ease);
+  }
+
+  .about-image-wrapper:hover {
+    border-color: var(--gold-dim);
+    transform: translateY(-4px);
   }
 
   .about-image {
     aspect-ratio: 3 / 4;
-    background-color: #e8e8e8;
+    background-color: var(--bg-raised);
     background-size: cover;
     background-position: center top;
+    border-radius: calc(var(--r-lg) - 8px);
+    filter: saturate(0.92);
+    transition: filter 0.6s var(--ease);
+  }
+
+  .about-image-wrapper:hover .about-image {
+    filter: saturate(1);
   }
 
   .about-caption {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1px;
+    display: block;
+    padding: 14px 10px 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: #d4a017;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 8px 12px;
-    border-radius: 4px;
+    color: var(--gold);
   }
 
   .about-contact {
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 60px;
-    margin-bottom: 40px;
+    margin-top: 70px;
   }
 
-  .about-page :global(.subscribe) {
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  @media (max-width: 768px) {
+  @media (max-width: 600px) {
     .about-images {
       grid-template-columns: 1fr;
     }

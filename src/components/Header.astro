@@ -39,70 +39,95 @@ const navGroups = [
     ],
   },
 ];
+
+const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
 ---
 
-<nav class="header" id="header">
+<header class="header" id="header">
   <div class="header-inner container">
-    <button class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-label="Toggle menu">
-      <svg class="icon-hamburger" id="icon-hamburger" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="3" y1="6" x2="21" y2="6" />
-        <line x1="3" y1="12" x2="21" y2="12" />
-        <line x1="3" y1="18" x2="21" y2="18" />
-      </svg>
-      <svg class="icon-close" id="icon-close" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
-      </svg>
-      <span class="menu-label">MENU</span>
-    </button>
-
-    <a href="/" class="logo">
-      <span class="logo-bold">Damien.</span><span class="logo-light">Herlihy</span><span class="cursor"></span>
+    <a href="/" class="wordmark" aria-label="Damien Herlihy — home">
+      <span class="wordmark-bold">Damien.</span><span class="wordmark-light">Herlihy</span><span
+        class="caret"></span>
     </a>
 
-    <button class="search-trigger" id="search-trigger" aria-label="Open search">
-      <span class="search-label">SEARCH</span>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8" />
-        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-      </svg>
-    </button>
-  </div>
+    <div class="header-actions">
+      <button class="search-trigger" id="search-trigger" aria-label="Open search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span class="trigger-label">Search</span>
+        <span class="kbd">⌘K</span>
+      </button>
 
-  <div class="menu-panel" id="menu-panel">
-    <div class="menu-grid container">
-      {navGroups.map((group) => (
-        <div class="menu-col">
-          <span class="menu-heading">{group.heading}</span>
-          {group.links.map((link) => (
-            <a href={link.href}>{link.label}</a>
-          ))}
-        </div>
-      ))}
+      <button class="menu-trigger" id="menu-trigger" aria-expanded="false" aria-controls="menu-overlay" aria-label="Open index">
+        <span class="trigger-label">Index</span>
+        <span class="burger" aria-hidden="true">
+          <span class="burger-line"></span>
+          <span class="burger-line"></span>
+        </span>
+      </button>
     </div>
   </div>
+</header>
 
-  <div class="header-border"></div>
-</nav>
+<!-- Full-screen index -->
+<div class="menu-overlay" id="menu-overlay" aria-hidden="true">
+  <nav class="menu-grid container" aria-label="Site index">
+    {
+      navGroups.map((group) => (
+        <div class="menu-col">
+          <span class="menu-heading eyebrow">{group.heading}</span>
+          <ul class="menu-list">
+            {group.links.map((link) => {
+              const isActive = currentPath === link.href;
+              return (
+                <li class="menu-item">
+                  <a
+                    href={link.href}
+                    class:list={['menu-link', { active: isActive }]}
+                    aria-current={isActive ? 'page' : undefined}
+                    target={link.href.startsWith('http') ? '_blank' : undefined}
+                    rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))
+    }
+  </nav>
+  <div class="menu-footer container">
+    <span class="menu-footer-note">A digital universe of notes, essays &amp; ideas</span>
+    <div class="menu-footer-links">
+      <a href="https://www.youtube.com/@damienherlihy" target="_blank" rel="noopener noreferrer">YouTube</a>
+      <a href="https://www.languagelayouts.com/" target="_blank" rel="noopener noreferrer">Language Layouts</a>
+      <a href="https://dis-aster.vercel.app" target="_blank" rel="noopener noreferrer">disASTER</a>
+    </div>
+  </div>
+</div>
 
-<div class="header-spacer"></div>
-
-<!-- Search Overlay -->
-<div class="search-overlay" id="search-overlay">
-  <div class="search-overlay-inner container">
+<!-- Search -->
+<div class="search-overlay" id="search-overlay" aria-hidden="true">
+  <div class="search-inner container">
     <div class="search-header">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="search-glyph">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
       <input
         type="text"
         class="search-input"
         id="search-input"
-        placeholder="Search posts..."
+        placeholder="Search the universe…"
         autocomplete="off"
+        aria-label="Search posts"
       />
       <button class="search-close" id="search-close" aria-label="Close search">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
+        <span class="kbd">ESC</span>
       </button>
     </div>
     <div class="search-results" id="search-results"></div>
@@ -117,151 +142,253 @@ const navGroups = [
     top: 0;
     left: 0;
     right: 0;
-    z-index: 100;
-    background: var(--color-bg);
-    transition: all .35s cubic-bezier(.25, .46, .45, .94);
+    z-index: var(--z-nav);
+    transition:
+      background-color 0.5s var(--ease),
+      border-color 0.5s var(--ease),
+      backdrop-filter 0.5s var(--ease);
+    border-bottom: 1px solid transparent;
+  }
+
+  .header.is-scrolled {
+    background: rgba(8, 8, 13, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom-color: var(--hairline);
   }
 
   .header-inner {
-    height: 120px;
+    height: var(--nav-h);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: height .35s cubic-bezier(.25, .46, .45, .94);
   }
 
-  .header--scrolled .header-inner {
-    height: var(--nav-height);
-  }
-
-  .header-border {
-    height: 1px;
-    background: var(--color-border);
-  }
-
-  .header-spacer {
-    height: 120px;
-  }
-
-  .menu-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: none;
-    border: none;
-    cursor: pointer;
+  .wordmark {
     font-family: var(--font-body);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    color: var(--color-text);
-    padding: 0;
-  }
-
-  .menu-label {
-    text-transform: uppercase;
-  }
-
-  .logo {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: var(--font-body);
-    font-size: 42px;
-    color: var(--color-black);
+    font-size: 21px;
+    letter-spacing: -0.01em;
+    color: var(--ink);
     white-space: nowrap;
-    transition: font-size .35s cubic-bezier(.25, .46, .45, .94);
   }
 
-  .header--scrolled .logo {
-    font-size: 28px;
+  .wordmark-bold {
+    font-weight: 600;
   }
 
-  .logo-bold {
-    font-weight: 700;
-  }
-
-  .logo-light {
+  .wordmark-light {
     font-weight: 300;
+    color: var(--ink-dim);
   }
 
-  .search-trigger {
+  .header-actions {
     display: flex;
     align-items: center;
     gap: 8px;
-    cursor: pointer;
-    color: var(--color-text);
-    background: none;
-    border: none;
-    font-family: var(--font-body);
-    padding: 0;
   }
 
-  .search-label {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 1px;
+  .search-trigger,
+  .menu-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 10px 16px;
+    cursor: pointer;
+    color: var(--ink-dim);
+    transition:
+      color 0.4s var(--ease),
+      border-color 0.4s var(--ease),
+      background-color 0.4s var(--ease);
+  }
+
+  .search-trigger:hover,
+  .menu-trigger:hover {
+    color: var(--ink);
+    border-color: var(--hairline-strong);
+    background: rgba(236, 234, 227, 0.04);
+  }
+
+  .trigger-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
   }
 
-  /* Menu Panel */
-  .menu-panel {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height .4s cubic-bezier(.25, .46, .45, .94);
+  .kbd {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    border: 1px solid var(--hairline);
+    border-radius: 5px;
+    padding: 2px 6px;
   }
 
-  .menu-panel.open {
-    max-height: 300px;
+  .burger {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 20px;
+    height: 16px;
+    position: relative;
+  }
+
+  .burger-line {
+    display: block;
+    height: 1.5px;
+    width: 100%;
+    background: currentColor;
+    border-radius: 2px;
+    transition: transform 0.45s var(--ease);
+    transform-origin: center;
+  }
+
+  body.menu-open .burger-line:nth-child(1) {
+    transform: translateY(3.25px) rotate(45deg);
+  }
+
+  body.menu-open .burger-line:nth-child(2) {
+    transform: translateY(-3.25px) rotate(-45deg);
+  }
+
+  /* ===== Index overlay ===== */
+  .menu-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-menu);
+    background: rgba(5, 5, 8, 0.82);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    opacity: 0;
+    visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition:
+      opacity 0.55s var(--ease),
+      visibility 0.55s var(--ease);
+  }
+
+  .menu-overlay.open {
+    opacity: 1;
+    visibility: visible;
   }
 
   .menu-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 0;
-    padding: 40px var(--content-padding);
-  }
-
-  .menu-col {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
-    border-right: 1px solid var(--color-border);
-    padding: 0 20px;
-  }
-
-  .menu-col:last-child {
-    border-right: none;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(32px, 5vw, 80px);
+    width: 100%;
   }
 
   .menu-heading {
+    margin-bottom: 22px;
+    display: inline-flex;
+  }
+
+  .menu-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .menu-item {
+    overflow: hidden;
+  }
+
+  .menu-link {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-size: clamp(30px, 3.6vw, 48px);
+    line-height: 1.25;
+    color: var(--ink);
+    transition:
+      color 0.4s var(--ease),
+      font-style 0.4s var(--ease),
+      transform 0.5s var(--ease);
+    transform: translateY(110%);
+  }
+
+  .menu-overlay.open .menu-link {
+    transform: translateY(0);
+  }
+
+  .menu-link:hover {
+    color: var(--gold-bright);
+    font-style: italic;
+  }
+
+  .menu-link.active {
+    color: var(--gold);
+  }
+
+  .menu-link.active::after {
+    content: '\2726';
+    font-size: 0.4em;
+    vertical-align: super;
+    margin-left: 10px;
+    color: var(--gold-dim);
+  }
+
+  .menu-footer {
+    position: absolute;
+    bottom: 36px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    opacity: 0;
+    transition: opacity 0.6s var(--ease) 0.35s;
+  }
+
+  .menu-overlay.open .menu-footer {
+    opacity: 1;
+  }
+
+  .menu-footer-note {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .menu-footer-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .menu-footer-links a {
     font-size: 14px;
-    color: var(--color-text-light);
-    margin-bottom: 8px;
+    color: var(--ink-dim);
+    transition: color 0.3s var(--ease);
   }
 
-  .menu-col a {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--color-black);
-    transition: opacity .25s cubic-bezier(.25, .46, .45, .94);
+  .menu-footer-links a:hover {
+    color: var(--gold-bright);
   }
 
-  .menu-col a:hover {
-    opacity: 0.6;
-  }
-
-  /* Search Overlay */
+  /* ===== Search overlay ===== */
   .search-overlay {
     position: fixed;
     inset: 0;
-    z-index: 200;
-    background: var(--color-bg);
+    z-index: var(--z-search);
+    background: rgba(5, 5, 8, 0.86);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
     opacity: 0;
     visibility: hidden;
-    transition: opacity .25s cubic-bezier(.25, .46, .45, .94),
-                visibility .25s cubic-bezier(.25, .46, .45, .94);
+    transition:
+      opacity 0.4s var(--ease),
+      visibility 0.4s var(--ease);
   }
 
   .search-overlay.open {
@@ -269,100 +396,111 @@ const navGroups = [
     visibility: visible;
   }
 
-  .search-overlay-inner {
-    padding-top: 120px;
-    max-width: 700px;
-    margin: 0 auto;
+  .search-inner {
+    padding-top: clamp(90px, 16vh, 160px);
+    max-width: 760px;
   }
 
   .search-header {
     display: flex;
     align-items: center;
-    gap: 16px;
-    border-bottom: 2px solid var(--color-black);
-    padding-bottom: 12px;
-    margin-bottom: 40px;
+    gap: 18px;
+    border-bottom: 1px solid var(--hairline-strong);
+    padding-bottom: 18px;
+    margin-bottom: 12px;
+  }
+
+  .search-glyph {
+    color: var(--gold);
+    flex-shrink: 0;
   }
 
   .search-input {
     flex: 1;
-    font-family: var(--font-body);
-    font-size: 32px;
-    font-weight: 600;
-    color: var(--color-black);
+    font-family: var(--font-display);
+    font-size: clamp(24px, 3.4vw, 38px);
+    font-weight: 400;
+    color: var(--ink);
     background: none;
     border: none;
     outline: none;
+    min-width: 0;
   }
 
   .search-input::placeholder {
-    color: var(--color-text-light);
+    color: var(--ink-faint);
   }
 
   .search-close {
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--color-text);
+    color: var(--ink-dim);
     padding: 4px;
-    transition: color .25s cubic-bezier(.25, .46, .45, .94);
   }
 
-  .search-close:hover {
-    color: var(--color-black);
+  .search-close:hover .kbd {
+    color: var(--ink);
+    border-color: var(--hairline-strong);
   }
 
   .search-results {
     display: flex;
     flex-direction: column;
+    max-height: 60vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
   }
 
   @media (max-width: 768px) {
-    .logo {
-      font-size: 22px;
+    .wordmark {
+      font-size: 18px;
     }
 
-    .search-label {
+    .trigger-label,
+    .kbd {
+      display: none;
+    }
+
+    .search-trigger,
+    .menu-trigger {
+      padding: 10px;
+      color: var(--ink);
+    }
+
+    .menu-trigger .trigger-label {
       display: none;
     }
 
     .menu-grid {
       grid-template-columns: 1fr;
-      gap: 30px;
+      gap: 26px;
+      padding-top: 70px;
+      overflow-y: auto;
+      max-height: calc(100dvh - 150px);
     }
 
-    .menu-col {
-      border-right: none;
-      border-bottom: 1px solid var(--color-border);
-      padding: 0 0 20px;
+    .menu-link {
+      font-size: 28px;
     }
 
-    .menu-col:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
+    .menu-heading {
+      margin-bottom: 10px;
     }
 
-    .menu-panel.open {
-      max-height: 600px;
-    }
-
-    .search-overlay-inner {
-      padding-top: 80px;
-    }
-
-    .search-input {
-      font-size: 22px;
+    .menu-footer {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      bottom: 22px;
     }
   }
 </style>
 
 <script>
-  const toggle = document.getElementById('menu-toggle')!;
-  const panel = document.getElementById('menu-panel')!;
-  const iconHamburger = document.getElementById('icon-hamburger')!;
-  const iconClose = document.getElementById('icon-close')!;
   const header = document.getElementById('header')!;
-
+  const menuTrigger = document.getElementById('menu-trigger')!;
+  const menuOverlay = document.getElementById('menu-overlay')!;
   const searchTrigger = document.getElementById('search-trigger')!;
   const searchOverlay = document.getElementById('search-overlay')!;
   const searchInput = document.getElementById('search-input')! as HTMLInputElement;
@@ -372,25 +510,46 @@ const navGroups = [
   const posts: { title: string; description: string; category: string; tag: string; slug: string }[] =
     JSON.parse(document.getElementById('search-data')!.textContent || '[]');
 
-  function closeMenu() {
-    panel.classList.remove('open');
-    iconHamburger.style.display = 'block';
-    iconClose.style.display = 'none';
-    toggle.setAttribute('aria-expanded', 'false');
+  function lockScroll(lock: boolean) {
+    const lenis = (window as any).__lenis;
+    if (lenis) (lock ? lenis.stop() : lenis.start());
+    document.body.style.overflow = lock ? 'hidden' : '';
   }
 
+  /* ---- Index menu ---- */
+  const menuLinks = menuOverlay.querySelectorAll<HTMLElement>('.menu-link');
+  menuLinks.forEach((link, i) => {
+    link.style.transitionDelay = `${0.08 + i * 0.045}s`;
+  });
+
+  function setMenu(open: boolean) {
+    document.body.classList.toggle('menu-open', open);
+    menuOverlay.classList.toggle('open', open);
+    menuOverlay.setAttribute('aria-hidden', String(!open));
+    menuTrigger.setAttribute('aria-expanded', String(open));
+    menuTrigger.setAttribute('aria-label', open ? 'Close index' : 'Open index');
+    if (!open) menuLinks.forEach((l) => (l.style.transitionDelay = '0s'));
+    else menuLinks.forEach((l, i) => (l.style.transitionDelay = `${0.08 + i * 0.045}s`));
+    lockScroll(open);
+  }
+
+  menuTrigger.addEventListener('click', () => setMenu(!document.body.classList.contains('menu-open')));
+
+  /* ---- Search ---- */
   function openSearch() {
-    closeMenu();
+    setMenu(false);
     searchOverlay.classList.add('open');
+    searchOverlay.setAttribute('aria-hidden', 'false');
     searchInput.value = '';
-    searchInput.focus();
     renderResults('');
-    document.body.style.overflow = 'hidden';
+    lockScroll(true);
+    setTimeout(() => searchInput.focus(), 60);
   }
 
   function closeSearch() {
     searchOverlay.classList.remove('open');
-    document.body.style.overflow = '';
+    searchOverlay.setAttribute('aria-hidden', 'true');
+    lockScroll(false);
   }
 
   function renderResults(query: string) {
@@ -406,93 +565,115 @@ const navGroups = [
 
     searchResults.innerHTML = filtered
       .map(
-        (p) => `
-        <a href="/post/${p.slug}" class="search-result">
+        (p, i) => `
+        <a href="/post/${p.slug}" class="search-result" style="animation-delay:${i * 0.03}s">
           <span class="search-result-title">${p.title}</span>
           <span class="search-result-meta">
-            <span class="search-result-tag">${p.tag}</span>
-            <span class="search-result-category">${p.category}</span>
+            <span class="search-result-pill">${p.tag}</span>
+            <span class="search-result-pill">${p.category}</span>
           </span>
         </a>`
       )
       .join('');
 
     if (q && filtered.length === 0) {
-      searchResults.innerHTML = '<p class="search-empty">No posts found</p>';
+      searchResults.innerHTML =
+        '<p class="search-empty">Nothing in this part of the sky. Try another word.</p>';
     }
   }
 
-  // Menu toggle
-  toggle.addEventListener('click', () => {
-    const isOpen = panel.classList.toggle('open');
-    iconHamburger.style.display = isOpen ? 'none' : 'block';
-    iconClose.style.display = isOpen ? 'block' : 'none';
-    toggle.setAttribute('aria-expanded', String(isOpen));
-  });
-
-  // Search
   searchTrigger.addEventListener('click', openSearch);
   searchClose.addEventListener('click', closeSearch);
   searchInput.addEventListener('input', () => renderResults(searchInput.value));
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && searchOverlay.classList.contains('open')) {
-      closeSearch();
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      searchOverlay.classList.contains('open') ? closeSearch() : openSearch();
+    }
+    if (e.key === 'Escape') {
+      if (searchOverlay.classList.contains('open')) closeSearch();
+      else if (document.body.classList.contains('menu-open')) setMenu(false);
     }
   });
 
-  // Shrink header on scroll + stop cursor blink
-  window.addEventListener('scroll', () => {
-    const scrolled = window.scrollY > 50;
-    header.classList.toggle('header--scrolled', scrolled);
-    document.body.classList.toggle('has-scrolled', scrolled);
-  }, { passive: true });
+  /* ---- Glass header on scroll ---- */
+  let scrolled = false;
+  window.addEventListener(
+    'scroll',
+    () => {
+      const next = window.scrollY > 30;
+      if (next !== scrolled) {
+        scrolled = next;
+        header.classList.toggle('is-scrolled', scrolled);
+        document.body.classList.toggle('has-scrolled', scrolled);
+      }
+    },
+    { passive: true }
+  );
 </script>
 
 <style is:global>
+  @keyframes result-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .search-result {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 0;
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-black);
-    text-decoration: none;
-    transition: opacity .25s cubic-bezier(.25, .46, .45, .94);
+    gap: 16px;
+    padding: 18px 4px;
+    border-bottom: 1px solid var(--hairline);
+    color: var(--ink);
+    opacity: 0;
+    animation: result-in 0.5s var(--ease-out) forwards;
+    transition: padding-left 0.35s var(--ease);
   }
 
   .search-result:hover {
-    opacity: 0.6;
+    padding-left: 14px;
   }
 
   .search-result-title {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 17px;
+    font-weight: 400;
+  }
+
+  .search-result:hover .search-result-title {
+    color: var(--gold-bright);
   }
 
   .search-result-meta {
     display: flex;
     gap: 8px;
     flex-shrink: 0;
-    margin-left: 16px;
   }
 
-  .search-result-tag,
-  .search-result-category {
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
+  .search-result-pill {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     padding: 4px 10px;
-    border-radius: var(--radius);
-    background: var(--color-tag-bg);
-    color: var(--color-text);
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+    color: var(--ink-faint);
     white-space: nowrap;
   }
 
   .search-empty {
-    color: var(--color-text-light);
+    color: var(--ink-faint);
     font-size: 16px;
-    padding: 20px 0;
+    padding: 24px 4px;
+    font-style: italic;
   }
 
   @media (max-width: 768px) {
@@ -501,9 +682,11 @@ const navGroups = [
       align-items: flex-start;
       gap: 8px;
     }
+  }
 
-    .search-result-meta {
-      margin-left: 0;
-    }
+  body.has-scrolled .caret {
+    opacity: 0;
+    animation: none;
+    transition: opacity 0.3s;
   }
 </style>

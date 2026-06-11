@@ -1,7 +1,6 @@
 ---
 import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import CategoryTag from '../../components/CategoryTag.astro';
 import RelatedPosts from '../../components/RelatedPosts.astro';
 
 export async function getStaticPaths() {
@@ -16,30 +15,72 @@ const { post } = Astro.props;
 const { Content } = await render(post);
 
 const dateStr = post.data.date
-  .toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  .toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' })
   .toUpperCase();
+
+const categorySlugs: Record<string, string> = {
+  'AI & Teaching': 'ai-and-teaching',
+  'Personal Knowledge Mgt': 'personal-knowledge-mgt',
+  'Second Mountain': 'second-mountain',
+  'Learning How to Learn': 'learning-how-to-learn',
+  Languages: 'languages',
+};
+
+function tagLabel(tag: string) {
+  if (tag.startsWith('Galaxy')) return 'Galaxy · Essay';
+  if (tag.startsWith('Star')) return 'Star · Note';
+  if (tag.startsWith('Constellation')) return 'Constellation · Pattern';
+  return 'Library';
+}
 ---
 
-<BaseLayout title={`${post.data.title} - Damien Herlihy`} description={post.data.description}>
+<BaseLayout
+  title={`${post.data.title} — Damien Herlihy`}
+  description={post.data.description}
+  image={post.data.image}
+>
+  <div class="read-progress" aria-hidden="true">
+    <span class="read-progress-bar" id="read-progress-bar"></span>
+  </div>
+
   <article class="post-page container page-content">
     <div class="post-header">
-      <div class="post-meta">
-        <CategoryTag category={post.data.category} />
+      <a href="/" class="post-back" data-reveal>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M19 12 H5 M12 19 L5 12 L12 5"></path>
+        </svg>
+        Back to the universe
+      </a>
+
+      <div class="post-meta" data-reveal data-reveal-delay="0.06">
+        <span class="post-pill post-pill-gold">{tagLabel(post.data.tag)}</span>
+        <a class="post-pill" href={`/category/${categorySlugs[post.data.category]}`}>
+          {post.data.category}
+        </a>
         <span class="post-date">{dateStr}</span>
       </div>
-      <h1 class="post-title">{post.data.title}</h1>
+
+      <h1 class="post-title" data-reveal data-reveal-delay="0.12">{post.data.title}</h1>
+
+      {
+        post.data.description && (
+          <p class="lede post-lede" data-reveal data-reveal-delay="0.18">
+            {post.data.description}
+          </p>
+        )
+      }
     </div>
 
-    <div class="post-content">
+    {
+      post.data.image && (
+        <figure class="post-figure" data-reveal>
+          <img src={post.data.image} alt="" loading="eager" />
+        </figure>
+      )
+    }
+
+    <div class="prose post-body">
       <Content />
-    </div>
-
-    <div class="post-tags">
-      <span class="tag-pill">{post.data.tag}</span>
     </div>
 
     <hr />
@@ -49,47 +90,151 @@ const dateStr = post.data.date
 </BaseLayout>
 
 <style>
+  .read-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: calc(var(--z-nav) + 1);
+    background: transparent;
+    pointer-events: none;
+  }
+
+  .read-progress-bar {
+    display: block;
+    height: 100%;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  .post-page {
+    max-width: 880px;
+  }
+
   .post-header {
-    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: clamp(36px, 5vw, 56px);
+  }
+
+  .post-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    transition: color 0.35s var(--ease);
+    width: fit-content;
+  }
+
+  .post-back:hover {
+    color: var(--gold-bright);
+  }
+
+  .post-back svg {
+    transition: transform 0.35s var(--ease);
+  }
+
+  .post-back:hover svg {
+    transform: translateX(-4px);
   }
 
   .post-meta {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .post-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    color: var(--ink-dim);
+    transition:
+      color 0.35s var(--ease),
+      border-color 0.35s var(--ease);
+  }
+
+  a.post-pill:hover {
+    color: var(--gold-bright);
+    border-color: var(--gold-dim);
+  }
+
+  .post-pill-gold {
+    color: var(--gold);
+    border-color: var(--gold-dim);
   }
 
   .post-date {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    color: var(--color-text-light);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
   }
 
   .post-title {
-    font-size: 50px;
-    font-weight: 700;
-    line-height: 1.1;
+    font-size: clamp(36px, 5.4vw, 64px);
+    max-width: 18ch;
   }
 
-  .post-tags {
-    margin-top: 40px;
+  .post-lede {
+    color: var(--ink-dim);
+    border-left: 2px solid var(--gold);
+    padding-left: 22px;
   }
 
-  .tag-pill {
-    display: inline-block;
-    padding: 8px 16px;
-    border: 1px solid var(--color-border);
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-black);
+  .post-figure {
+    margin-bottom: clamp(40px, 5vw, 60px);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    padding: 8px;
+    background: rgba(13, 13, 20, 0.62);
   }
 
-  @media (max-width: 768px) {
-    .post-title {
-      font-size: 32px;
+  .post-figure img {
+    width: 100%;
+    border-radius: calc(var(--r-lg) - 8px);
+  }
+
+  .post-body {
+    margin: 0 auto;
+  }
+
+  @media (min-width: 900px) {
+    .post-body {
+      margin-left: auto;
+      margin-right: auto;
     }
   }
 </style>
+
+<script>
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const bar = document.getElementById('read-progress-bar')!;
+  ScrollTrigger.create({
+    trigger: '.post-body',
+    start: 'top 60%',
+    end: 'bottom 40%',
+    onUpdate: (self) => {
+      bar.style.transform = `scaleX(${self.progress})`;
+    },
+  });
+</script>

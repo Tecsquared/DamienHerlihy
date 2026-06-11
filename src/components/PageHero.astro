@@ -1,0 +1,35 @@
+---
+interface Props {
+  eyebrow: string;
+  description?: string;
+}
+
+const { eyebrow, description } = Astro.props;
+---
+
+<header class="page-hero">
+  <p class="eyebrow" data-reveal>{eyebrow}</p>
+  <h1 class="page-hero-title" data-reveal data-reveal-delay="0.08">
+    <slot />
+  </h1>
+  {
+    description && (
+      <p class="lede" data-reveal data-reveal-delay="0.16">
+        {description}
+      </p>
+    )
+  }
+</header>
+
+<style>
+  .page-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: clamp(48px, 7vw, 90px);
+  }
+
+  .page-hero-title {
+    max-width: 16ch;
+  }
+</style>

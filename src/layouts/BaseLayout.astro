@@ -11,8 +11,8 @@ interface Props {
 }
 
 const {
-  title = 'Damien Herlihy',
-  description = 'Damien Herlihy is both a teacher and a learner of languages. Teacher, PKM Nerd, and Video Maker.',
+  title = 'Damien Herlihy — A Digital Universe',
+  description = 'Damien Herlihy is both a teacher and a learner of languages. Teacher, PKM nerd, and video maker — constructing a digital universe of notes, essays, and ideas.',
   image = '/images/og-default.jpg',
 } = Astro.props;
 
@@ -36,6 +36,8 @@ const allPosts = (await getCollection('posts'))
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="theme-color" content="#08080d" />
+    <meta name="color-scheme" content="dark" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -49,16 +51,111 @@ const allPosts = (await getCollection('posts'))
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital@1&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Outfit:wght@300..700&family=Space+Mono:ital,wght@0,400;0,700&display=swap"
       rel="stylesheet"
     />
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    </script>
   </head>
   <body>
-    <script>if ('scrollRestoration' in history) history.scrollRestoration = 'manual';</script>
+    <div class="sky" aria-hidden="true"></div>
+    <a href="#main" class="skip-link">Skip to content</a>
     <Header posts={allPosts} />
-    <main>
+    <main id="main">
       <slot />
     </main>
     <Footer />
+    <div class="noise" aria-hidden="true"></div>
+
+    <script>
+      import Lenis from 'lenis';
+      import gsap from 'gsap';
+      import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+      gsap.registerPlugin(ScrollTrigger);
+
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const finePointer = window.matchMedia('(pointer: fine)').matches;
+
+      /* ---- Smooth scrolling with inertia (Lenis + GSAP ticker) ---- */
+      if (!reducedMotion) {
+        const lenis = new Lenis({
+          duration: 1.15,
+          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        });
+        (window as any).__lenis = lenis;
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time) => lenis.raf(time * 1000));
+        gsap.ticker.lagSmoothing(0);
+
+        // In-page anchors travel through Lenis
+        document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) => {
+          a.addEventListener('click', (e) => {
+            const id = a.getAttribute('href');
+            if (!id || id === '#') return;
+            const target = document.querySelector(id);
+            if (!target) return;
+            e.preventDefault();
+            lenis.scrollTo(target as HTMLElement, { offset: -70 });
+          });
+        });
+      }
+
+      /* ---- Scroll reveals ---- */
+      if (!reducedMotion) {
+        gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((el) => {
+          const delay = parseFloat(el.dataset.revealDelay || '0');
+          gsap.to(el, {
+            opacity: 1,
+            y: 0,
+            duration: 1.1,
+            delay,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: el,
+              start: 'top 88%',
+              once: true,
+            },
+            onComplete: () => {
+              el.classList.add('is-revealed');
+              gsap.set(el, { clearProps: 'transform,opacity' });
+            },
+          });
+        });
+      } else {
+        document
+          .querySelectorAll<HTMLElement>('[data-reveal]')
+          .forEach((el) => ((el.style.opacity = '1'), (el.style.transform = 'none')));
+      }
+
+      /* ---- Magnetic pull on buttons ---- */
+      if (!reducedMotion && finePointer) {
+        document.querySelectorAll<HTMLElement>('[data-magnetic]').forEach((el) => {
+          const xTo = gsap.quickTo(el, 'x', { duration: 0.5, ease: 'power3.out' });
+          const yTo = gsap.quickTo(el, 'y', { duration: 0.5, ease: 'power3.out' });
+          el.addEventListener('pointermove', (e) => {
+            const r = el.getBoundingClientRect();
+            xTo((e.clientX - (r.left + r.width / 2)) * 0.28);
+            yTo((e.clientY - (r.top + r.height / 2)) * 0.28);
+          });
+          el.addEventListener('pointerleave', () => {
+            gsap.to(el, { x: 0, y: 0, duration: 0.9, ease: 'elastic.out(1, 0.4)' });
+          });
+        });
+      }
+
+      /* ---- Spotlight borders follow the cursor ---- */
+      if (finePointer) {
+        document.addEventListener('pointermove', (e) => {
+          const card = (e.target as HTMLElement).closest?.('.spotlight-card') as HTMLElement | null;
+          if (!card) return;
+          const r = card.getBoundingClientRect();
+          card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+          card.style.setProperty('--my', `${e.clientY - r.top}px`);
+        });
+      }
+    </script>
   </body>
 </html>

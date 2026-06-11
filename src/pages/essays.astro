@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
 import PostCardGrid from '../components/PostCardGrid.astro';
 import { getCollection } from 'astro:content';
 
@@ -8,44 +9,51 @@ const posts = (await getCollection('posts'))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 ---
 
-<BaseLayout title="Essays - Damien Herlihy">
-  <section class="grid-page container page-content">
-    <h1>Galaxy/Essay</h1>
-    <p class="grid-description">
-      Longform content where I organise my stars [notes] into constellations
-      [patterns] and galaxies [essays].
-    </p>
-    <div class="post-grid cols-2">
-      {posts.map((post) => (
-        <PostCardGrid
-          title={post.data.title}
-          category={post.data.category}
-          date={post.data.date}
-          slug={post.id}
-          image={post.data.image}
-        />
-      ))}
+<BaseLayout
+  title="Essays — Damien Herlihy"
+  description="Galaxies: longform essays where notes are organised into constellations and whole regions of sky."
+>
+  <section class="container page-content">
+    <PageHero
+      eyebrow={`Galaxies · ${posts.length} charted`}
+      description="Longform pieces where I organise my stars [notes] into constellations [patterns] and galaxies [essays]."
+    >
+      Whole regions <em>of sky</em>
+    </PageHero>
+
+    <div class="post-grid">
+      {
+        posts.map((post, i) => (
+          <div data-reveal data-reveal-delay={String((i % 2) * 0.1)}>
+            <PostCardGrid
+              title={post.data.title}
+              category={post.data.category}
+              date={post.data.date}
+              slug={post.id}
+              image={post.data.image}
+            />
+          </div>
+        ))
+      }
     </div>
   </section>
 </BaseLayout>
 
 <style>
-  .grid-description {
-    margin: 16px 0 48px;
-    max-width: 700px;
-  }
-
   .post-grid {
     display: grid;
-    gap: 40px;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
   }
 
-  .cols-2 {
-    grid-template-columns: 1fr 1fr;
+  @media (min-width: 769px) {
+    .post-grid > div:nth-child(even) {
+      margin-top: 40px;
+    }
   }
 
   @media (max-width: 768px) {
-    .cols-2 {
+    .post-grid {
       grid-template-columns: 1fr;
     }
   }

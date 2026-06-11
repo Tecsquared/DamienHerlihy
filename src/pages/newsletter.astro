@@ -1,10 +1,22 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
 import Subscribe from '../components/Subscribe.astro';
 ---
 
-<BaseLayout title="Newsletter - Damien Herlihy">
+<BaseLayout
+  title="Newsletter — Damien Herlihy"
+  description="Subscribe to disASTER — finding the star in disaster, from a language teacher who never stopped being a learner."
+>
   <section class="newsletter-page container page-content">
-    <Subscribe />
+    <PageHero
+      eyebrow="Transmission"
+      description="An occasional newsletter about teaching, learning, and finding the star in disaster."
+    >
+      The <em>disASTER</em> dispatch
+    </PageHero>
+    <div data-reveal>
+      <Subscribe />
+    </div>
   </section>
 </BaseLayout>

@@ -1,10 +1,29 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
 import ContactForm from '../components/ContactForm.astro';
 ---
 
-<BaseLayout title="Contact - Damien Herlihy">
+<BaseLayout
+  title="Contact — Damien Herlihy"
+  description="Get in touch — collaboration, coaching, or conversation about teaching and learning languages."
+>
   <section class="contact-page container page-content">
-    <ContactForm />
+    <PageHero
+      eyebrow="Contact"
+      description="Collaboration, coaching, or just a good conversation about teaching and learning — all signals welcome."
+    >
+      Send a <em>signal</em>
+    </PageHero>
+
+    <div class="contact-wrap" data-reveal>
+      <ContactForm heading="" description="" />
+    </div>
   </section>
 </BaseLayout>
+
+<style>
+  .contact-wrap {
+    max-width: 700px;
+  }
+</style>

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
 import PostCardGrid from '../components/PostCardGrid.astro';
 import { getCollection } from 'astro:content';
 
@@ -8,43 +9,51 @@ const posts = (await getCollection('posts'))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 ---
 
-<BaseLayout title="Notes - Damien Herlihy">
-  <section class="grid-page container page-content">
-    <h1>Notes/Stars</h1>
-    <p class="grid-description">
-      Unstructured ideas/stars on concepts I'm still trying to figure out...
-    </p>
-    <div class="post-grid cols-3">
-      {posts.map((post) => (
-        <PostCardGrid
-          title={post.data.title}
-          category={post.data.category}
-          date={post.data.date}
-          slug={post.id}
-          image={post.data.image}
-        />
-      ))}
+<BaseLayout
+  title="Notes — Damien Herlihy"
+  description="Stars: unstructured notes and sparks — ideas still finding their shape."
+>
+  <section class="container page-content">
+    <PageHero
+      eyebrow={`Stars · ${posts.length} burning`}
+      description="Unstructured sparks on concepts I am still trying to figure out — published before they are polished, left to grow."
+    >
+      Sparks, <em>still forming</em>
+    </PageHero>
+
+    <div class="post-grid">
+      {
+        posts.map((post, i) => (
+          <div data-reveal data-reveal-delay={String((i % 3) * 0.08)}>
+            <PostCardGrid
+              title={post.data.title}
+              category={post.data.category}
+              date={post.data.date}
+              slug={post.id}
+              image={post.data.image}
+            />
+          </div>
+        ))
+      }
     </div>
   </section>
 </BaseLayout>
 
 <style>
-  .grid-description {
-    margin: 16px 0 48px;
-    max-width: 700px;
-  }
-
   .post-grid {
     display: grid;
-    gap: 30px;
-  }
-
-  .cols-3 {
     grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
   }
 
-  @media (max-width: 768px) {
-    .cols-3 {
+  @media (max-width: 1024px) {
+    .post-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 700px) {
+    .post-grid {
       grid-template-columns: 1fr;
     }
   }

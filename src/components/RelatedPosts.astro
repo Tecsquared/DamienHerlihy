@@ -16,34 +16,43 @@ const related = allPosts
   .slice(0, 3);
 ---
 
-{related.length > 0 && (
-  <section class="related-posts">
-    <div class="related-grid">
-      {related.map((post) => (
-        <PostCardGrid
-          title={post.data.title}
-          category={post.data.category}
-          date={post.data.date}
-          slug={post.id}
-          image={post.data.image}
-        />
-      ))}
-    </div>
-  </section>
-)}
+{
+  related.length > 0 && (
+    <section class="related-posts">
+      <p class="eyebrow">Same constellation</p>
+      <h2 class="related-heading">Nearby stars</h2>
+      <div class="related-grid">
+        {related.map((post) => (
+          <PostCardGrid
+            title={post.data.title}
+            category={post.data.category}
+            date={post.data.date}
+            slug={post.id}
+            image={post.data.image}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
 
 <style>
   .related-posts {
-    margin-top: 40px;
+    margin-top: clamp(60px, 8vw, 100px);
+  }
+
+  .related-heading {
+    font-size: clamp(26px, 3vw, 38px);
+    margin: 16px 0 36px;
   }
 
   .related-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
+    gap: 22px;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 900px) {
     .related-grid {
       grid-template-columns: 1fr;
     }
