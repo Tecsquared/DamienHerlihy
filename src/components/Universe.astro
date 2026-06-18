@@ -477,7 +477,19 @@ const { posts } = Astro.props;
       if (heroActive() && matchMedia('(pointer: fine)').matches) {
         raycaster.setFromCamera(pointer, camera);
         const hits = raycaster.intersectObject(postStars);
-        setHover(hits.length ? hits[0].index ?? -1 : -1);
+        // Pick the star nearest the cursor (smallest distanceToRay), not the
+        // one nearest the camera — otherwise stars that cluster in the same
+        // constellation shadow each other and share one tooltip.
+        let pick = -1;
+        let bestRayDist = Infinity;
+        for (const h of hits) {
+          const d = h.distanceToRay ?? Infinity;
+          if (d < bestRayDist) {
+            bestRayDist = d;
+            pick = h.index ?? -1;
+          }
+        }
+        setHover(pick);
         if (hovered >= 0) {
           tip.style.left = `${Math.min(pointerPx.x + 18, innerWidth - 320)}px`;
           tip.style.top = `${pointerPx.y + 18}px`;
