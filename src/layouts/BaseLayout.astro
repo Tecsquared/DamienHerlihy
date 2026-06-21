@@ -8,15 +8,64 @@ interface Props {
   title?: string;
   description?: string;
   image?: string;
+  schema?: object | object[];
 }
 
 const {
   title = 'Damien Herlihy — A Digital Universe',
   description = 'Damien Herlihy is both a teacher and a learner of languages. Teacher, PKM nerd, and video maker — constructing a digital universe of notes, essays, and ideas.',
   image = '/images/og-default.jpg',
+  schema,
 } = Astro.props;
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://damienherlihy.com');
+const SITE = Astro.site ?? new URL('https://www.damienherlihy.com');
+const canonicalURL = new URL(Astro.url.pathname, SITE);
+
+// Site-wide identity graph — Damien (Person) + the site (WebSite), linked by @id so AI
+// engines treat every page as authored by the same verifiable person.
+const personSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  '@id': new URL('/#damien', SITE).href,
+  name: 'Damien Herlihy',
+  url: SITE.href,
+  image: new URL('/images/about/authentic.jpeg', SITE).href,
+  jobTitle: 'Language teacher, writer, and co-founder of TEC',
+  description:
+    'Australian teacher and learner of languages — TESOL-trained, former IELTS examiner and EAP teacher, now building a digital universe of notes, essays and ideas.',
+  nationality: 'Australian',
+  homeLocation: { '@type': 'Place', name: 'Brisbane, Australia' },
+  knowsAbout: [
+    'English language teaching',
+    'TESOL',
+    'Second language acquisition',
+    'Personal knowledge management',
+    'AI and teaching',
+    'Language learning',
+    'Digital gardens',
+  ],
+  worksFor: [
+    { '@type': 'Organization', name: 'TEC — Trat English Community', url: 'https://www.tecschool.org/' },
+    { '@type': 'Organization', name: 'Language Layouts', url: 'https://www.languagelayouts.com/' },
+  ],
+  sameAs: [
+    'https://www.youtube.com/@damienherlihy',
+    'https://www.languagelayouts.com/',
+    'https://dis-aster.vercel.app',
+  ],
+};
+
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': new URL('/#website', SITE).href,
+  name: 'Damien Herlihy — A Digital Universe',
+  url: SITE.href,
+  description,
+  inLanguage: 'en',
+  author: { '@id': new URL('/#damien', SITE).href },
+  publisher: { '@id': new URL('/#damien', SITE).href },
+};
 
 const allPosts = (await getCollection('posts'))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
@@ -54,6 +103,9 @@ const allPosts = (await getCollection('posts'))
       href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Outfit:wght@300..700&family=Space+Mono:ital,wght@0,400;0,700&display=swap"
       rel="stylesheet"
     />
+    <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+    {schema && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
     <script is:inline>
       document.documentElement.classList.add('js');
       if ('scrollRestoration' in history) history.scrollRestoration = 'manual';

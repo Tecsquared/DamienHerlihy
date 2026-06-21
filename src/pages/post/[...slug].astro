@@ -32,12 +32,33 @@ function tagLabel(tag: string) {
   if (tag.startsWith('Constellation')) return 'Constellation · Pattern';
   return 'Library';
 }
+
+const SITE = Astro.site ?? new URL('https://www.damienherlihy.com');
+const postUrl = new URL(Astro.url.pathname, SITE).href;
+const postSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: post.data.title,
+  ...(post.data.description ? { description: post.data.description } : {}),
+  datePublished: post.data.date.toISOString(),
+  dateModified: post.data.date.toISOString(),
+  ...(post.data.image ? { image: new URL(post.data.image, SITE).href } : {}),
+  url: postUrl,
+  mainEntityOfPage: postUrl,
+  author: { '@id': new URL('/#damien', SITE).href },
+  publisher: { '@id': new URL('/#damien', SITE).href },
+  isPartOf: { '@id': new URL('/#website', SITE).href },
+  articleSection: post.data.category,
+  keywords: post.data.tag,
+  inLanguage: 'en',
+};
 ---
 
 <BaseLayout
   title={`${post.data.title} — Damien Herlihy`}
   description={post.data.description}
   image={post.data.image}
+  schema={postSchema}
 >
   <div class="read-progress" aria-hidden="true">
     <span class="read-progress-bar" id="read-progress-bar"></span>

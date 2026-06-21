@@ -3,11 +3,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
 import Subscribe from '../components/Subscribe.astro';
 import ContactForm from '../components/ContactForm.astro';
+
+const SITE = Astro.site ?? new URL('https://www.damienherlihy.com');
+const aboutSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  url: new URL('/about', SITE).href,
+  mainEntity: { '@id': new URL('/#damien', SITE).href },
+  about: { '@id': new URL('/#damien', SITE).href },
+};
 ---
 
 <BaseLayout
   title="About — Damien Herlihy"
   description="Who is behind this digital universe — backstory, bookends, and the pushback against an inauthentic Internet."
+  schema={aboutSchema}
 >
   <section class="about-page container page-content">
     <div class="about-narrow">

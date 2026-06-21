@@ -1,0 +1,37 @@
+# Damien Herlihy — A Digital Universe
+
+> Damien Herlihy is an Australian language teacher and learner — TESOL-trained, a former IELTS examiner and EAP teacher, co-founder of TEC (a language school in Trat, Thailand), and creator of Language Layouts. This site is his "digital universe": a digital garden of notes, essays and patterns on language teaching, learning how to learn, AI in education, and personal knowledge management.
+
+## About
+- Who: Damien Herlihy — teacher and learner of languages, writer, video maker. Based in Brisbane, Australia.
+- Background: CELTA (London), Master of TESOL, English-for-Academic-Purposes teacher in Melbourne (also IELTS examiner and action researcher). Co-founded TEC in Trat, Thailand; now runs Language Layouts.
+- Ethos: a pushback against an inauthentic, AI-flattened internet — inspired by Maggie Appleton's "digital gardens".
+
+## How the site is organised
+Posts are "celestial bodies":
+- Galaxy (Essay) — long-form synthesis
+- Constellation (Pattern) — recurring patterns and ideas
+- Star (Note) — short, evolving notes
+- Library — notes on books and resources
+
+Categories: AI & Teaching · Learning How to Learn · Personal Knowledge Mgt · Languages · Second Mountain
+
+## Key pages
+- [Home](https://www.damienherlihy.com/)
+- [About](https://www.damienherlihy.com/about)
+- [Now](https://www.damienherlihy.com/now)
+- [Essays](https://www.damienherlihy.com/essays)
+- [Notes](https://www.damienherlihy.com/notes)
+- [Library](https://www.damienherlihy.com/library)
+- [Services](https://www.damienherlihy.com/services)
+- [Newsletter — disASTER](https://www.damienherlihy.com/newsletter)
+
+## Selected writing
+- [AI: The State of Play in Language Teaching in 2024](https://www.damienherlihy.com/post/ai-the-state-of-play-for-teachers) — Galaxy / Essay
+- [Learning How to Learn: The State of Play for Teachers](https://www.damienherlihy.com/post/learning-how-to-learn-the-state-of-play-for-teachers) — Galaxy / Essay
+- [PKM for Teachers: The State of Play](https://www.damienherlihy.com/post/personal-knowledge-management-for-teachers-the-state-of-play) — Galaxy / Essay
+- [A Narrow Window for Feedback](https://www.damienherlihy.com/post/feedback) — Star / Note
+- [Centaur ELT: Learning a Language](https://www.damienherlihy.com/post/centaur-elt-learning-a-language) — Star / Note
+
+## More
+- [Full index for AI](https://www.damienherlihy.com/llms-full.txt) — every post, grouped by theme
