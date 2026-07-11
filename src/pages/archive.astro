@@ -1,0 +1,86 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PostCardList from '../components/PostCardList.astro';
+import SpaceArchive from '../components/SpaceArchive.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('posts')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+const years = posts.map((p) => p.data.date.getFullYear());
+const range = `${Math.min(...years)} — ${Math.max(...years)}`;
+
+const flightPosts = posts.map((p) => ({
+  title: p.data.title,
+  slug: p.id,
+  category: p.data.category,
+  tag: p.data.tag,
+  description: p.data.description || '',
+  image: p.data.image || '',
+  year: p.data.date.getFullYear(),
+  dateLabel: p.data.date
+    .toLocaleDateString('en-AU', { year: 'numeric', month: 'short' })
+    .toUpperCase(),
+}));
+
+// Year separators for the flat list
+let lastYear = 0;
+---
+
+<BaseLayout
+  title="Archive — Damien Herlihy"
+  description={`Every transmission in the digital universe, ${range} — browse the list, or fly the archive toward the event horizon.`}
+>
+  <section class="container page-content" id="flat-archive">
+    <PageHero
+      eyebrow={`Archive · ${posts.length} transmissions · ${range}`}
+      description="Everything I've published, newest first, drifting slowly toward the event horizon. Browse the list — or take the flight."
+    >
+      Falling <em>back in time</em>
+    </PageHero>
+
+    <p class="flight-invite" id="flight-invite" hidden>
+      <button class="btn" id="relaunch-flight" type="button">Fly the archive ✦</button>
+    </p>
+
+    <div class="archive-list">
+      {
+        posts.map((post) => {
+          const y = post.data.date.getFullYear();
+          const showYear = y !== lastYear;
+          lastYear = y;
+          return (
+            <>
+              {showYear && <h2 class="year-mark eyebrow">{y}</h2>}
+              <PostCardList
+                title={post.data.title}
+                category={post.data.category}
+                date={post.data.date}
+                slug={post.id}
+                image={post.data.image}
+              />
+            </>
+          );
+        })
+      }
+    </div>
+  </section>
+
+  <SpaceArchive posts={flightPosts} range={range} />
+</BaseLayout>
+
+<style>
+  .flight-invite {
+    margin: -28px 0 44px;
+  }
+
+  .year-mark {
+    margin: 54px 0 6px;
+  }
+
+  .archive-list > .year-mark:first-child {
+    margin-top: 0;
+  }
+</style>
