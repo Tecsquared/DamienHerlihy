@@ -52,7 +52,57 @@ Working log for the 3D archive flight (`/archive`). Decisions, bends in the plan
 - Flight-feel tuning knobs: `SPACING` (portal gap), track height multiplier (55vh/post),
   progress easing (0.07), fog density (0.0028), path amplitude in `pathX`/`pathY`.
 
+## Painted Descent build (2026-07-12, from FABLE-BUILD-HANDOVER.md)
+
+Full conversion of v2 to the locked handover design. What changed:
+
+- **Helmet entry:** `/archive/helmet-entry.mp4` (5s trim of the Higgsfield shot,
+  silent, 1.4MB, poster jpg). Plays over the already-running scene on Launch,
+  crossfades out as the visor resolves (~3.9s). Skip button + Escape skip,
+  3s stall guard, `error` fallback — all paths land in the live scene.
+  `sessionStorage['sa-helmet-seen']` skips it on relaunch within a session.
+- **Proximity encounters (Memory Dissolve):** plaques are no longer always-on.
+  Far = warm star only → entering range = image card materialises (noise-eroded
+  pigment edges, soft oval "memory fragment" mask) → near = image dissolves +
+  desaturates while title/meta resolve in the same plane. Only the nearest two
+  encounters may show cards. Image textures lazy-load on first approach; a
+  failed image quietly falls back to the title-only state.
+- **Editorial Aperture:** focus card gained a painterly image header that opens
+  tall then contracts (`settled` class, 700ms). Proper dialog: `role="dialog"`,
+  aria-modal, focus moves to close button, Tab loops inside, Escape/click-away
+  closes, focus returns to the opener.
+- **Keyboard path:** `.star-index` nav (server-rendered, visually hidden until
+  focused) lists all 15 transmissions; Enter opens the aperture card.
+- **Pacing:** star spacing by type — Galaxy 200, Constellation 150, Star/Library
+  116 world units. Essays also get bigger stars with chalk rays.
+- **Poetic Visor:** status line cycles the handover language ("Archive awake",
+  "A signal is resolving", "Memory held in range", "Light is beginning to
+  bend"…). HUD fades in only after the helmet blackout and recedes while a
+  card is open. Hint reduced to "SCROLL TO DRIFT".
+- **Finale:** camera stays near-level while sinking (gaze tilts a few degrees,
+  not 50); auroras and year type rotate around the well as you descend;
+  constellation thread + gold line fade; audio bed pitches down (48→31Hz) and
+  thins to near-silence via a descent gain.
+
+### Sound-effect integration (for Damien's Soundly pass)
+
+Drop files into `public/archive/sfx/` and uncomment the entries in `CUE_URLS`
+at the top of the SpaceArchive script block:
+
+- `seal` — fires at 2.6s of the helmet video (helmet crosses the camera)
+- `breath` — fires 0.5s after seal (one enclosed breath)
+- `dissolve` — fires when a card's Memory Dissolve passes 40% (gain 0.35)
+- `select` — fires when the Editorial Aperture opens
+
+Cues are silent no-ops until the files exist; loading failures are swallowed.
+The continuous bed stays synthesised (brown noise + 48Hz drone) unless a
+seamless Soundly bed replaces it later.
+
 ## Open / next
 
-- Flight feel needs Damien's eyes on the live deploy (speed, portal proximity, glow).
+- Flight feel + Memory Dissolve tuning need Damien's eyes on the live deploy
+  (dissolve distances are `revealT/dissolveT/titleT` ramps in the encounter
+  loop; helmet crossfade timing is the `3.9` in `runHelmet`).
+- Production handoff polish: regenerate/grade the helmet video's last frame
+  against a screenshot of the real scene so the cut is invisible.
 - Possible later: fast-travel ticks on the HUD gauge; warp-through transition on "Read".
