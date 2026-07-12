@@ -69,6 +69,18 @@ function tagLabel(tag: string) {
 ></video>
 <button class="helmet-skip" id="helmet-skip" type="button" hidden>Skip intro</button>
 
+<!-- Event horizon finale (silent): plays once at the end of the descent,
+     then the end card rises over its final frame -->
+<video
+  class="finale"
+  id="finale"
+  src="/archive/event-horizon.mp4"
+  muted
+  playsinline
+  preload="none"
+  aria-hidden="true"
+></video>
+
 <!-- Visor -->
 <div class="visor" id="visor" aria-hidden="true">
   <div class="visor-edge visor-edge-l"></div>
@@ -208,6 +220,25 @@ function tagLabel(tag: string) {
   }
 
   .helmet.show {
+    display: block;
+    opacity: 1;
+  }
+
+  .finale {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Above the visor and HUD, below the end card that rises over it */
+    z-index: 100;
+    background: #0e0e1e;
+    opacity: 0;
+    transition: opacity 1.6s ease;
+  }
+
+  .finale.show {
     display: block;
     opacity: 1;
   }
@@ -822,6 +853,7 @@ function tagLabel(tag: string) {
   const focusDesc = document.getElementById('focus-desc')!;
   const focusRead = document.getElementById('focus-read') as HTMLAnchorElement;
   const endCard = document.getElementById('end-card')!;
+  const finale = document.getElementById('finale') as HTMLVideoElement;
   const returnLaunch = document.getElementById('return-launch')!;
   const endFlat = document.getElementById('end-flat')!;
   const invite = document.getElementById('flight-invite')!;
@@ -1895,29 +1927,36 @@ function tagLabel(tag: string) {
     holeGroup.position.copy(pathCurve.getPointAt(1));
     scene.add(holeGroup);
 
-    // Warm halo (the inverse of a post star: dark heart, warm rim)
-    const halo = new THREE.Sprite(
-      new THREE.SpriteMaterial({
-        map: radialGlowTexture('rgba(232, 168, 107, 0.5)', 'rgba(232, 168, 107, 0)'),
-        transparent: true,
-        opacity: 0.85,
-        depthWrite: false,
-      })
-    );
-    halo.scale.set(120, 120, 1);
-    holeGroup.add(halo);
-
-    const dark = new THREE.Sprite(
-      new THREE.SpriteMaterial({
-        map: radialGlowTexture('rgba(8, 8, 16, 1)', 'rgba(8, 8, 16, 0)', 0.45),
-        transparent: true,
-        opacity: 1,
-        depthWrite: false,
-      })
-    );
-    dark.scale.set(46, 46, 1);
-    dark.position.z = 1;
-    holeGroup.add(dark);
+    // The black hole itself: the supplied painting, its square edges
+    // feathered away on a canvas so it melts into the surrounding dark.
+    // The finale film opens on the same subject, so arrival crossfades
+    // from this still into motion seamlessly.
+    const holeImg = new Image();
+    holeImg.src = '/archive/black-hole.jpg';
+    holeImg.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = c.height = 1024;
+      const g = c.getContext('2d')!;
+      g.drawImage(holeImg, 0, 0, 1024, 1024);
+      g.globalCompositeOperation = 'destination-in';
+      const fade = g.createRadialGradient(512, 512, 300, 512, 512, 512);
+      fade.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      fade.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      g.fillStyle = fade;
+      g.fillRect(0, 0, 1024, 1024);
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const hole = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: tex,
+          transparent: true,
+          opacity: 1,
+          depthWrite: false,
+        })
+      );
+      hole.scale.set(190, 190, 1);
+      holeGroup.add(hole);
+    };
 
     // Slow chalky swirl of captured starlight
     const SPIRAL_N = 260;
@@ -2161,10 +2200,38 @@ function tagLabel(tag: string) {
       runHelmet();
     }
 
+    let finaleTimer: ReturnType<typeof setTimeout> | null = null;
+    function runFinale() {
+      const showBanner = () => {
+        endCard.classList.add('show');
+        endCard.setAttribute('aria-hidden', 'false');
+      };
+      finale.classList.add('show');
+      finale.currentTime = 0;
+      finale.onended = showBanner;
+      const p = finale.play();
+      p?.catch(showBanner); // autoplay refused: straight to the banner
+      // Stall guard: the banner must never be lost behind a stuck video
+      finaleTimer = setTimeout(() => {
+        if (!endCard.classList.contains('show')) showBanner();
+      }, 8000);
+    }
+
+    function hideFinale() {
+      finale.classList.remove('show');
+      finale.pause();
+      finale.onended = null;
+      if (finaleTimer) {
+        clearTimeout(finaleTimer);
+        finaleTimer = null;
+      }
+    }
+
     function exitFlight() {
       flying = false;
       running = false;
       closeFocus(true);
+      hideFinale();
       document.body.classList.remove('flying');
       canvas.classList.remove('is-on');
       hud.classList.remove('on');
@@ -2580,13 +2647,15 @@ function tagLabel(tag: string) {
         document.body.style.cursor = hit >= 0 ? 'pointer' : '';
       }
 
-      // End card
+      // Event horizon: the finale film swallows the view, then the end
+      // card rises over its last frame
+      if (camU > 0.85 && finale.preload !== 'auto') finale.preload = 'auto';
       if (progress > 0.985 && !ended) {
         ended = true;
-        endCard.classList.add('show');
-        endCard.setAttribute('aria-hidden', 'false');
+        runFinale();
       } else if (progress < 0.96 && ended) {
         ended = false;
+        hideFinale();
         endCard.classList.remove('show');
         endCard.setAttribute('aria-hidden', 'true');
       }
