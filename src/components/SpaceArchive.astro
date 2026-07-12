@@ -64,7 +64,7 @@ function tagLabel(tag: string) {
   poster="/archive/helmet-entry-poster.jpg"
   muted
   playsinline
-  preload="auto"
+  preload="none"
   aria-hidden="true"
 ></video>
 <button class="helmet-skip" id="helmet-skip" type="button" hidden>Skip intro</button>
@@ -956,6 +956,7 @@ function tagLabel(tag: string) {
     gate.classList.add('show');
     gate.setAttribute('aria-hidden', 'false');
     invite.hidden = false;
+    helmet.preload = 'auto'; // only eligible desktops pay for the video
 
     let renderer: THREE.WebGLRenderer;
     try {
