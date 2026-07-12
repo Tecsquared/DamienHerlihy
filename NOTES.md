@@ -84,19 +84,31 @@ Full conversion of v2 to the locked handover design. What changed:
   constellation thread + gold line fade; audio bed pitches down (48→31Hz) and
   thins to near-silence via a descent gain.
 
-### Sound-effect integration (for Damien's Soundly pass)
+### Soundscape (wired 2026-07-12 from the Soundly Inbox drop)
 
-Drop files into `public/archive/sfx/` and uncomment the entries in `CUE_URLS`
-at the top of the SpaceArchive script block:
+Source: `AI-Second-Brain/01-ideas/codex-inbox/2026-07-12_1537-unassigned-new-drop/sound-search/`
+(34 wavs, curated per SOUNDLY-SEARCH-LIST). Twenty picks converted to 160k MP3
+in `public/archive/sfx/` (6.3MB, fetched only after Launch on eligible desktops).
+Gains + URLs live in the `SFX` manifest at the top of the SpaceArchive script —
+tune there. Every cue degrades to silence if its file fails.
 
-- `seal` — fires at 2.6s of the helmet video (helmet crosses the camera)
-- `breath` — fires 0.5s after seal (one enclosed breath)
-- `dissolve` — fires when a card's Memory Dissolve passes 40% (gain 0.35)
-- `select` — fires when the Editorial Aperture opens
-
-Cues are silent no-ops until the files exist; loading failures are swallowed.
-The continuous bed stays synthesised (brown noise + 48Hz drone) unless a
-seamless Soundly bed replaces it later.
+- **Helmet timeline** (50ms poller against video time): hands 0.05s → lift
+  1.05s → cross 2.2s → seal 2.85s → visor 3.45s → breath 3.95s → wake 4.4s.
+- **Beds**: elevator hum + low subs, crossfade-looped (two overlapping sources,
+  2s equal-power overlap — no seam clicks), routed through duck → descent, so
+  they dip while a card is open and thin to near-silence at the horizon.
+  Synth foundation (brown noise + 48Hz drone) kept underneath.
+- **Aurora swell**: bottle whistle every 18–44s (randomised).
+- **Encounters** (once per pass, hysteresis-reset): chime at reveal>0.5,
+  ice-debris at dissolve>0.4, soft servo at title>0.65; select on card open,
+  book-slide on dismiss (not on instant/exit closes).
+- **Journey** (once per flight, reset on relaunch/return): gravity 78% →
+  funnel 88% → starlight 93% → geyser approach 96.2% → arrival bell 98.5%.
+  These route straight to master so they survive the descent fade.
+- **Rejected picks** (anti-goals): energy sword + plasma shield (weapons),
+  magic-evil-spell pad (creepy), horror stingers (alarm), riser (tension),
+  handbrake (mechanical), wah-wah chime (novelty). Alternates stay in the
+  Inbox drop if a swap is wanted.
 
 ## Open / next
 

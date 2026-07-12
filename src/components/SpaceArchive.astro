@@ -828,15 +828,35 @@ function tagLabel(tag: string) {
   const AURORA_LAVENDER = '#8d80b8';
 
   /* =========================================================
-     Audio — a very quiet continuous warm bed, synthesised.
-     Damien's sound pass drops files into CUES below; until
-     then every cue is a silent no-op.
+     Audio — Soundly selections (2026-07-12 Inbox drop) over a
+     quiet synthesised foundation. Loaded lazily after Launch;
+     every cue degrades to silence if its file fails.
      ========================================================= */
-  const CUE_URLS: Record<string, string> = {
-    // seal: '/archive/sfx/helmet-seal.mp3',      — helmet crosses the camera
-    // breath: '/archive/sfx/enclosed-breath.mp3', — one breath inside the visor
-    // dissolve: '/archive/sfx/signal-resolve.mp3',— a card dissolves into a title
-    // select: '/archive/sfx/select.mp3',          — Editorial Aperture opens
+  const SFX: Record<string, { url: string; gain: number }> = {
+    // Helmet entry (timed to the video)
+    hands: { url: '/archive/sfx/hands.mp3', gain: 0.5 },
+    lift: { url: '/archive/sfx/lift.mp3', gain: 0.5 },
+    cross: { url: '/archive/sfx/cross.mp3', gain: 0.6 },
+    seal: { url: '/archive/sfx/seal.mp3', gain: 0.55 },
+    visor: { url: '/archive/sfx/visor.mp3', gain: 0.35 },
+    breath: { url: '/archive/sfx/breath.mp3', gain: 0.5 },
+    wake: { url: '/archive/sfx/wake.mp3', gain: 0.3 },
+    // Continuous atmosphere (crossfade-looped)
+    'bed-hum': { url: '/archive/sfx/bed-hum.mp3', gain: 0.14 },
+    'bed-subs': { url: '/archive/sfx/bed-subs.mp3', gain: 0.16 },
+    aurora: { url: '/archive/sfx/aurora.mp3', gain: 0.12 },
+    // Star proximity + cards
+    chime: { url: '/archive/sfx/chime.mp3', gain: 0.2 },
+    dissolve: { url: '/archive/sfx/dissolve.mp3', gain: 0.3 },
+    resolve: { url: '/archive/sfx/resolve.mp3', gain: 0.13 },
+    select: { url: '/archive/sfx/select.mp3', gain: 0.4 },
+    dismiss: { url: '/archive/sfx/dismiss.mp3', gain: 0.4 },
+    // Journey and event horizon (once per flight)
+    gravity: { url: '/archive/sfx/gravity.mp3', gain: 0.3 },
+    funnel: { url: '/archive/sfx/funnel.mp3', gain: 0.35 },
+    starlight: { url: '/archive/sfx/starlight.mp3', gain: 0.2 },
+    approach: { url: '/archive/sfx/approach.mp3', gain: 0.25 },
+    arrival: { url: '/archive/sfx/arrival.mp3', gain: 0.45 },
   };
 
   function makeAudio() {
@@ -887,22 +907,70 @@ function tagLabel(tag: string) {
     lfo.connect(lfoGain).connect(lowpass.frequency);
     lfo.start();
 
-    // One-shot cues (loaded lazily, silent until files exist)
+    /* File-based layers */
     const buffers: Record<string, AudioBuffer> = {};
-    for (const [name, url] of Object.entries(CUE_URLS)) {
-      fetch(url)
-        .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject()))
-        .then((ab) => ctx.decodeAudioData(ab))
-        .then((buf) => {
-          buffers[name] = buf;
-        })
-        .catch(() => {});
+    let loadStarted = false;
+    function loadAll() {
+      if (loadStarted) return;
+      loadStarted = true;
+      for (const [name, def] of Object.entries(SFX)) {
+        fetch(def.url)
+          .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject()))
+          .then((ab) => ctx.decodeAudioData(ab))
+          .then((buf) => {
+            buffers[name] = buf;
+          })
+          .catch(() => {});
+      }
     }
+
+    // Seamless loop via two overlapping sources with equal-power fades
+    const LOOP_OVERLAP = 2.0;
+    function loopBuffer(name: string) {
+      const g = ctx.createGain();
+      g.gain.value = SFX[name]?.gain ?? 0.1;
+      g.connect(duck);
+      let stopped = false;
+      let timer: ReturnType<typeof setTimeout>;
+      function schedule() {
+        if (stopped) return;
+        const buf = buffers[name];
+        if (!buf) {
+          timer = setTimeout(schedule, 600); // decode not finished yet
+          return;
+        }
+        const dur = Math.max(LOOP_OVERLAP * 2 + 1, buf.duration);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        const sg = ctx.createGain();
+        const t = ctx.currentTime;
+        sg.gain.setValueAtTime(0, t);
+        sg.gain.linearRampToValueAtTime(1, t + LOOP_OVERLAP);
+        sg.gain.setValueAtTime(1, t + dur - LOOP_OVERLAP);
+        sg.gain.linearRampToValueAtTime(0, t + dur);
+        src.connect(sg).connect(g);
+        src.start(t);
+        src.stop(t + dur + 0.1);
+        timer = setTimeout(schedule, (dur - LOOP_OVERLAP) * 1000);
+      }
+      schedule();
+      return {
+        stop() {
+          stopped = true;
+          clearTimeout(timer);
+          g.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
+        },
+      };
+    }
+
+    let beds: Array<{ stop(): void }> = [];
+    let swellTimer: ReturnType<typeof setTimeout> | null = null;
 
     let lastDescent = -1;
 
-    return {
+    const api = {
       ctx,
+      loadAll,
       setMuted(m: boolean) {
         master.gain.linearRampToValueAtTime(m ? 0 : 1, ctx.currentTime + 0.3);
       },
@@ -918,17 +986,36 @@ function tagLabel(tag: string) {
         lowpass.frequency.linearRampToValueAtTime(110 - 62 * v, t);
         descent.gain.linearRampToValueAtTime(1 - 0.92 * v, t);
       },
-      cue(name: string, gain = 0.5) {
+      cue(name: string, gainOverride?: number) {
         const buf = buffers[name];
         if (!buf) return;
         const src = ctx.createBufferSource();
         src.buffer = buf;
         const g = ctx.createGain();
-        g.gain.value = gain;
+        g.gain.value = gainOverride ?? SFX[name]?.gain ?? 0.4;
         src.connect(g).connect(master);
         src.start();
       },
+      startBeds() {
+        if (beds.length) return;
+        beds = [loopBuffer('bed-hum'), loopBuffer('bed-subs')];
+        // Occasional aurora swell, never on a schedule you could tap to
+        const swell = () => {
+          api.cue('aurora');
+          swellTimer = setTimeout(swell, 18000 + Math.random() * 26000);
+        };
+        swellTimer = setTimeout(swell, 9000 + Math.random() * 10000);
+      },
+      stopBeds() {
+        beds.forEach((b) => b.stop());
+        beds = [];
+        if (swellTimer) {
+          clearTimeout(swellTimer);
+          swellTimer = null;
+        }
+      },
     };
+    return api;
   }
 
   /* =========================================================
@@ -1350,6 +1437,8 @@ function tagLabel(tag: string) {
       dissolve: number;
       titleA: number;
       announced: boolean;
+      chimed: boolean;
+      resolved: boolean;
     }
 
     const encounters: Encounter[] = [];
@@ -1408,6 +1497,8 @@ function tagLabel(tag: string) {
         dissolve: 0,
         titleA: 0,
         announced: false,
+        chimed: false,
+        resolved: false,
       });
 
       // Image card is created lazily the first time the camera approaches
@@ -1560,6 +1651,7 @@ function tagLabel(tag: string) {
     let hintGone = false;
     let ended = false;
     let lastFocusEl: HTMLElement | null = null;
+    const journeyFired = new Set<string>();
 
     const railPos = new THREE.Vector3();
     const focusPos = new THREE.Vector3();
@@ -1633,6 +1725,9 @@ function tagLabel(tag: string) {
       if (!audio) audio = makeAudio();
       audio.ctx.resume();
       audio.setMuted(muted);
+      audio.loadAll();
+      audio.startBeds();
+      journeyFired.clear();
       if (!running) {
         running = true;
         requestAnimationFrame(frame);
@@ -1674,15 +1769,33 @@ function tagLabel(tag: string) {
       helmetSkip.hidden = false;
       helmet.classList.add('show');
       lenis()?.stop(); // hold the journey until the visor resolves
-      let sealed = false;
+
+      // Sound timeline against the 5s video: hands take hold, helmet lifts,
+      // crosses the camera, seals shut, visor settles, one enclosed breath,
+      // the system wakes as the HUD calibrates.
+      const cueTimeline: Array<[number, string]> = [
+        [0.05, 'hands'],
+        [1.05, 'lift'],
+        [2.2, 'cross'],
+        [2.85, 'seal'],
+        [3.45, 'visor'],
+        [3.95, 'breath'],
+        [4.4, 'wake'],
+      ];
+      let cueIdx = 0;
+      const cueTimer = setInterval(() => {
+        // Video paused = skipped or finished; playback drives the timeline
+        if (helmet.ended || (helmet.paused && helmet.currentTime > 0.1)) {
+          clearInterval(cueTimer);
+          return;
+        }
+        while (cueIdx < cueTimeline.length && helmet.currentTime >= cueTimeline[cueIdx][0]) {
+          audio?.cue(cueTimeline[cueIdx][1]);
+          cueIdx++;
+        }
+      }, 50);
 
       const onTime = () => {
-        // Helmet crosses the camera ≈2.6s; visor resolves ≈3.6s
-        if (!sealed && helmet.currentTime > 2.6) {
-          sealed = true;
-          audio?.cue('seal');
-          setTimeout(() => audio?.cue('breath'), 500);
-        }
         if (helmet.currentTime > 3.9) beginFade();
       };
       let fading = false;
@@ -1736,6 +1849,7 @@ function tagLabel(tag: string) {
       endCard.classList.remove('show');
       ended = false;
       audio?.setMuted(true);
+      audio?.stopBeds();
       lenis()?.start();
       window.scrollTo(0, 0);
       lenis()?.scrollTo(0, { immediate: true });
@@ -1747,6 +1861,7 @@ function tagLabel(tag: string) {
     exitBtn.addEventListener('click', exitFlight);
     endFlat.addEventListener('click', exitFlight);
     returnLaunch.addEventListener('click', () => {
+      journeyFired.clear(); // the descent can sound again next time down
       lenis()?.scrollTo(0, { duration: 3 });
     });
 
@@ -1799,6 +1914,7 @@ function tagLabel(tag: string) {
       hud.classList.remove('receded');
       setStatus('');
       audio?.setDuck(false);
+      if (!instant) audio?.cue('dismiss');
       if (lastFocusEl) {
         lastFocusEl.focus();
         lastFocusEl = null;
@@ -1897,6 +2013,24 @@ function tagLabel(tag: string) {
     const t0 = performance.now();
     const tNow = () => (performance.now() - t0) / 1000;
     let hudTick = 0;
+
+    // Journey sound moments, once per flight (reset on enterFlight)
+    const journeyCues: Array<[number, string]> = [
+      [0.78, 'gravity'],
+      [0.88, 'funnel'],
+      [0.93, 'starlight'],
+      [0.962, 'approach'],
+      [0.985, 'arrival'],
+    ];
+
+    function fireJourneyCues(p: number) {
+      for (const [at, name] of journeyCues) {
+        if (p >= at && !journeyFired.has(name)) {
+          journeyFired.add(name);
+          audio?.cue(name);
+        }
+      }
+    }
 
     function frame() {
       if (!running) return;
@@ -2032,12 +2166,25 @@ function tagLabel(tag: string) {
         enc.titleMat.opacity = enc.titleA * 0.92;
         enc.titleMesh.visible = enc.titleA > 0.015;
 
-        // A dissolve beginning = "a signal is resolving" cue (once per pass)
+        // Sound moments, once per pass: chime as the memory materialises,
+        // ice-pigment as it dissolves, a soft servo as the title resolves
+        if (enc.reveal > 0.5 && !enc.chimed) {
+          enc.chimed = true;
+          audio?.cue('chime');
+        } else if (enc.reveal < 0.1 && enc.chimed) {
+          enc.chimed = false;
+        }
         if (enc.dissolve > 0.4 && !enc.announced) {
           enc.announced = true;
-          audio?.cue('dissolve', 0.35);
+          audio?.cue('dissolve');
         } else if (enc.dissolve < 0.1 && enc.announced) {
           enc.announced = false;
+        }
+        if (enc.titleA > 0.65 && !enc.resolved) {
+          enc.resolved = true;
+          audio?.cue('resolve');
+        } else if (enc.titleA < 0.1 && enc.resolved) {
+          enc.resolved = false;
         }
 
         // Star warms and grows slightly as its card materialises — no ring
@@ -2072,6 +2219,8 @@ function tagLabel(tag: string) {
         endCard.classList.remove('show');
         endCard.setAttribute('aria-hidden', 'true');
       }
+
+      fireJourneyCues(progress);
 
       // HUD every few frames
       if (++hudTick % 8 === 0) updateHud(camX, progress);
