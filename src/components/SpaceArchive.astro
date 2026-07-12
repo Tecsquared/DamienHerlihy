@@ -1297,6 +1297,7 @@ function tagLabel(tag: string) {
       uniforms: {
         uTime: { value: 0 },
         uPx: { value: Math.min(devicePixelRatio, dprCap) },
+        uAlpha: { value: 0.7 },
       },
       vertexShader: `
         attribute float aSize;
@@ -1315,6 +1316,7 @@ function tagLabel(tag: string) {
       `,
       fragmentShader: `
         uniform float uTime;
+        uniform float uAlpha;
         varying float vPhase;
         varying float vSpeed;
         void main() {
@@ -1324,11 +1326,52 @@ function tagLabel(tag: string) {
           vec3 warm = vec3(0.93, 0.91, 0.86);
           vec3 lav = vec3(0.78, 0.75, 0.88);
           vec3 col = mix(warm, lav, step(0.6, fract(vPhase * 7.31)));
-          gl_FragColor = vec4(col, core * tw * 0.7);
+          gl_FragColor = vec4(col, core * tw * uAlpha);
         }
       `,
     });
     scene.add(new THREE.Points(starGeo, starMat));
+
+    /* ---------- Depth dust: two extra speckle fields whose parallax
+       separates the world into layers as the camera translates ---------- */
+    function dustField(
+      seed: string,
+      count: number,
+      zMin: number,
+      zMax: number,
+      ySpread: number,
+      sizeMin: number,
+      sizeMax: number,
+      alpha: number
+    ) {
+      const r = hash(seed);
+      const pos = new Float32Array(count * 3);
+      const size = new Float32Array(count);
+      const phase = new Float32Array(count);
+      const speed = new Float32Array(count);
+      for (let i = 0; i < count; i++) {
+        pos[i * 3] = -200 + r() * (xWell + 600);
+        pos[i * 3 + 1] = -ySpread + r() * ySpread * 2;
+        pos[i * 3 + 2] = zMin + r() * (zMax - zMin);
+        size[i] = sizeMin + r() * (sizeMax - sizeMin);
+        phase[i] = r();
+        speed[i] = 0.2 + r() * 0.9;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+      geo.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
+      geo.setAttribute('aSpeed', new THREE.BufferAttribute(speed, 1));
+      const mat = starMat.clone();
+      mat.uniforms.uAlpha.value = alpha;
+      const pts = new THREE.Points(geo, mat);
+      scene.add(pts);
+      return mat;
+    }
+    // Mid-ground grain drifting between the stars
+    const midDustMat = dustField('mid-dust', 800, -90, -20, 150, 0.6, 1.6, 0.35);
+    // Sparse near motes that whip past the visor — the strongest depth cue
+    const nearDustMat = dustField('near-motes', 130, 24, 70, 95, 1.4, 2.6, 0.16);
 
     /* ---------- Aurora veils, far background ---------- */
     const aRand = hash('aurora-veils');
@@ -1350,10 +1393,17 @@ function tagLabel(tag: string) {
     }
     const auroraBaseY = auroras.map((a) => a.position.y);
 
-    /* ---------- The spacetime line + gold light-line ---------- */
+    /* ---------- The spacetime line + gold light-line ----------
+       The line weaves gently in z as well as y, so lateral travel makes
+       it visibly advance and recede; the weave settles to the well's
+       plane before the dip so the funnel stays coherent. */
+    const lineZ = (x: number) => {
+      const damp = Math.min(1, Math.max(0, (xWell - 60 - x) / 190));
+      return Math.sin(x * 0.0043 + 1.7) * 14 * damp;
+    };
     const linePts: THREE.Vector3[] = [];
     for (let x = -160; x <= xWell + 320; x += 4) {
-      linePts.push(new THREE.Vector3(x, lineY(x), 0));
+      linePts.push(new THREE.Vector3(x, lineY(x), lineZ(x)));
     }
     const spaceLine = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints(linePts),
@@ -1363,7 +1413,7 @@ function tagLabel(tag: string) {
 
     const goldPts: THREE.Vector3[] = [];
     for (let x = -160; x <= xWell + 40; x += 4) {
-      goldPts.push(new THREE.Vector3(x, lineY(x) + 3.2, 0.5));
+      goldPts.push(new THREE.Vector3(x, lineY(x) + 3.2, lineZ(x) + 0.5));
     }
     const goldGeo = new THREE.BufferGeometry().setFromPoints(goldPts);
     const goldMat = new THREE.LineDashedMaterial({
@@ -1447,13 +1497,24 @@ function tagLabel(tag: string) {
     const starBoost: number[] = posts.map(() => 0);
     const constellationPts: THREE.Vector3[] = [];
 
+    /* Three real depth bands. Essays sit nearest the visor; the rest cycle
+       mid/far so adjacent stars always travel at different parallax rates. */
+    const Z_BANDS: Array<[number, number]> = [
+      [22, 44], // near — inside the dust, big and quick
+      [-75, -40], // mid — the journey's main shelf
+      [-170, -125], // far — hazed by fog, drifting slowly
+    ];
+    const CARD_SCALE_BY_BAND = [0.68, 1.0, 1.5]; // normalise apparent card size
+
     posts.forEach((post, i) => {
       const r = hash(post.slug);
       const isEssay = post.tag.startsWith('Galaxy');
       const side = i % 2 === 0 ? 1 : -1;
+      const band = isEssay ? 0 : i % 3; // essays always near; the rest cycle
       const x = postX[i];
-      const y = baseY(x) + side * (46 + r() * 18);
-      const z = (r() - 0.5) * 40;
+      const y = baseY(x) + side * (42 + r() * 26);
+      const [z0, z1] = Z_BANDS[band];
+      const z = z0 + r() * (z1 - z0);
 
       const mat = new THREE.SpriteMaterial({
         map: isEssay ? essayStarTex : noteStarTex,
@@ -1472,8 +1533,9 @@ function tagLabel(tag: string) {
       constellationPts.push(star.position.clone());
 
       // Card plane sits beside the star, slightly toward the camera
-      const cardY = y - sc * 0.55 - CARD_H * 0.62;
+      const cardY = y - sc * 0.55 - CARD_H * 0.62 * CARD_SCALE_BY_BAND[band];
 
+      const cardScale = CARD_SCALE_BY_BAND[band];
       const titleMat = new THREE.MeshBasicMaterial({
         map: plaqueTexture(post),
         transparent: true,
@@ -1482,6 +1544,7 @@ function tagLabel(tag: string) {
       });
       const titleMesh = new THREE.Mesh(new THREE.PlaneGeometry(34, 34 * (224 / 1024)), titleMat);
       titleMesh.position.set(x, cardY, z + 1);
+      titleMesh.scale.setScalar(cardScale);
       scene.add(titleMesh);
 
       encounters.push({
@@ -1535,7 +1598,8 @@ function tagLabel(tag: string) {
                 new THREE.PlaneGeometry(CARD_W, CARD_H),
                 cardMat
               );
-              cardMesh.position.set(x, cardY + CARD_H * 0.34, z + 0.5);
+              cardMesh.position.set(x, cardY + CARD_H * 0.34 * cardScale, z + 0.5);
+              cardMesh.scale.setScalar(cardScale);
               scene.add(cardMesh);
               enc.cardMesh = cardMesh;
               enc.cardMat = cardMat;
@@ -2058,13 +2122,18 @@ function tagLabel(tag: string) {
       const camY = -4 - sinkEase * 96;
       const lookYBase = camY - 12 - sinkEase * 14; // gentle downward drift only
 
-      // Rail pose — eased mouse-look, gentle vertical breath
+      // Rail pose — eased mouse-look, gentle vertical breath.
+      // Real parallax comes from TRANSLATING the eye, not just rotating it:
+      // the pointer slides the camera a few units so depth layers shear
+      // against each other; a slow push-in adds restrained forward travel;
+      // the well draws the camera into the scene as the path bends down.
       lookX += (mouseX - lookX) * 0.06;
       lookY += (mouseY - lookY) * 0.06;
       const breathe = Math.sin(t * 0.4) * 1.6;
-      railPos.set(camX, camY + breathe * 0.4, CAM_DIST);
+      const camZ = CAM_DIST + 12 - progress * 20 - sinkEase * 30;
+      railPos.set(camX + lookX * 7, camY + breathe * 0.4 + lookY * 4.5, camZ);
       dummy.position.copy(railPos);
-      dummy.lookAt(camX + 14 + lookX * 18, lookYBase + breathe + lookY * 12, 0);
+      dummy.lookAt(camX + 14 + lookX * 22, lookYBase + breathe + lookY * 13, -24);
       railQuat.copy(dummy.quaternion);
 
       // Focus pose (drift toward the focused star)
@@ -2084,6 +2153,8 @@ function tagLabel(tag: string) {
 
       // Uniforms + ambient motion
       starMat.uniforms.uTime.value = t;
+      midDustMat.uniforms.uTime.value = t;
+      nearDustMat.uniforms.uTime.value = t;
       (spiral.material as THREE.ShaderMaterial).uniforms.uTime.value = t;
       spiral.rotation.z = t * 0.04;
       auroras.forEach((a, i) => {
