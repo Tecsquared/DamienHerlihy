@@ -5,7 +5,7 @@ category: "Learning How to Learn"
 tag: "Star (Note)"
 featured: false
 description: "Should feedback be immediate or delayed? The learning-science classics flatly contradict each other — until you notice the word 'immediate' is keeping time on two different clocks."
-image: "/images/posts/blog-star.jpg"
+image: "/images/menu-star.png"
 ---
 
 Picture a kid learning to ride a bike with training wheels bolted on. They wobble off down the path, upright, grinning, apparently *cycling*. Take the training wheels off and they fall over in a metre.
