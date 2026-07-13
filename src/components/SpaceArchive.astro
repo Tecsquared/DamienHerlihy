@@ -1931,6 +1931,7 @@ function tagLabel(tag: string) {
     // feathered away on a canvas so it melts into the surrounding dark.
     // The finale film opens on the same subject, so arrival crossfades
     // from this still into motion seamlessly.
+    let holeSprite: THREE.Sprite | null = null;
     const holeImg = new Image();
     holeImg.src = '/archive/black-hole.jpg';
     holeImg.onload = () => {
@@ -1938,8 +1939,10 @@ function tagLabel(tag: string) {
       c.width = c.height = 1024;
       const g = c.getContext('2d')!;
       g.drawImage(holeImg, 0, 0, 1024, 1024);
+      // Circular mask: solid disc, brief feather — a rotating round body,
+      // not a soft square wash
       g.globalCompositeOperation = 'destination-in';
-      const fade = g.createRadialGradient(512, 512, 300, 512, 512, 512);
+      const fade = g.createRadialGradient(512, 512, 390, 512, 512, 500);
       fade.addColorStop(0, 'rgba(0, 0, 0, 1)');
       fade.addColorStop(1, 'rgba(0, 0, 0, 0)');
       g.fillStyle = fade;
@@ -1952,10 +1955,15 @@ function tagLabel(tag: string) {
           transparent: true,
           opacity: 1,
           depthWrite: false,
+          // Drawn over everything in the scene: the tapering tube end
+          // otherwise occludes it as a lumpy silhouette
+          depthTest: false,
         })
       );
-      hole.scale.set(190, 190, 1);
+      hole.renderOrder = 20;
+      hole.scale.set(200, 200, 1);
       holeGroup.add(hole);
+      holeSprite = hole;
     };
 
     // Slow chalky swirl of captured starlight
@@ -2521,6 +2529,8 @@ function tagLabel(tag: string) {
       nearDustMat.uniforms.uTime.value = t;
       (spiral.material as THREE.ShaderMaterial).uniforms.uTime.value = t;
       spiral.rotation.z = t * 0.04;
+      // The black hole turns slowly against the swirl as you close in
+      if (holeSprite) (holeSprite.material as THREE.SpriteMaterial).rotation = -t * 0.06;
       auroras.forEach((a, i) => {
         a.position.y = auroraBaseY[i] + Math.sin(t * 0.05 + i * 1.7) * 4;
         const mat = a.material as THREE.SpriteMaterial;
