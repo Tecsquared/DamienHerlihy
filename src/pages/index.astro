@@ -242,12 +242,13 @@ function tagLabel(tag: string) {
       <a href="/archive" class="guide-archive spotlight-card" data-reveal data-reveal-delay="0.12">
         <div class="guide-archive-body">
           <span class="guide-num">05</span>
-          <span class="guide-glyph glyph-library" aria-hidden="true">
-            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4">
-              <path class="lib-line" d="M10 40 V12" />
-              <path class="lib-line" d="M18 40 V8" />
-              <path class="lib-line" d="M26 40 V14" />
-              <path class="lib-line" d="M37 40 L30 11" />
+          <span class="guide-glyph glyph-rocket" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+              <path d="M24 9 C29 14 30 21 30 27 L30 31 L18 31 L18 27 C18 21 19 14 24 9 Z" />
+              <circle cx="24" cy="20" r="2.6" fill="currentColor" stroke="none" />
+              <path d="M18 27 L13 33 L18 31" />
+              <path d="M30 27 L35 33 L30 31" />
+              <path class="rocket-flame" d="M21 31 L24 39 L27 31" />
             </svg>
           </span>
           <h3 class="guide-name">
@@ -681,6 +682,32 @@ function tagLabel(tag: string) {
   .glyph-star svg {
     animation: star-breathe 3.4s ease-in-out infinite;
     transform-origin: center;
+  }
+
+  .glyph-rocket svg {
+    transition: transform 0.5s var(--ease);
+  }
+
+  .guide-archive:hover .glyph-rocket svg {
+    transform: translateY(-4px) rotate(-4deg);
+  }
+
+  .rocket-flame {
+    opacity: 0;
+    transform-origin: center top;
+    transition:
+      opacity 0.4s var(--ease),
+      transform 0.4s var(--ease);
+  }
+
+  .guide-archive:hover .rocket-flame {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .guide-archive:hover .glyph-rocket svg {
+      transform: none;
+    }
   }
 
   @keyframes star-breathe {
