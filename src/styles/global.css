@@ -497,6 +497,103 @@ p:last-child {
   border: 1px solid var(--hairline);
 }
 
+/* Figures + captions */
+.prose figure {
+  margin: 2.5em 0;
+}
+.prose figure img {
+  margin: 0;
+  width: 100%;
+}
+.prose .figure-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.4rem;
+  align-items: start;
+  margin: 2.75em 0;
+}
+.prose .figure-pair figure {
+  margin: 0;
+}
+.prose figcaption {
+  margin-top: 0.8em;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-align: center;
+}
+.prose figcaption b {
+  color: var(--gold-dim);
+  font-weight: 400;
+}
+@media (max-width: 600px) {
+  .prose .figure-pair {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+/* Inline sound-effect play buttons */
+.sfx-btn {
+  --sfx-size: 2.3em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sfx-size);
+  height: var(--sfx-size);
+  margin: 0.2em 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--gold-dim);
+  background: var(--gold-glow);
+  color: var(--gold-bright);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.3s ease;
+}
+.sfx-btn::before {
+  content: '';
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0.42em 0 0.42em 0.68em;
+  border-color: transparent transparent transparent currentColor;
+  margin-left: 0.16em;
+}
+.sfx-btn:hover:not([disabled]) {
+  background: var(--gold);
+  color: var(--bg-deep);
+  transform: scale(1.06);
+  box-shadow: 0 0 0 4px var(--gold-glow);
+}
+.sfx-btn.is-playing {
+  background: var(--gold);
+  color: var(--bg-deep);
+  animation: sfxPulse 1.6s ease-in-out infinite;
+}
+.sfx-btn.is-playing::before {
+  border: none;
+  width: 0.6em;
+  height: 0.62em;
+  margin: 0;
+  background:
+    linear-gradient(currentColor, currentColor) left / 0.2em 100% no-repeat,
+    linear-gradient(currentColor, currentColor) right / 0.2em 100% no-repeat;
+}
+.sfx-btn[disabled] {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+@keyframes sfxPulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--gold-glow); }
+  50% { box-shadow: 0 0 0 8px rgba(217, 169, 79, 0.05); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sfx-btn.is-playing { animation: none; }
+}
+
 .prose em {
   font-style: italic;
 }

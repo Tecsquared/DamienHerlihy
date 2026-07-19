@@ -208,6 +208,41 @@ const allPosts = (await getCollection('posts'))
           card.style.setProperty('--my', `${e.clientY - r.top}px`);
         });
       }
+
+      /* ---- Inline sound-effect play buttons ---- */
+      {
+        let current: HTMLAudioElement | null = null;
+        let currentBtn: HTMLButtonElement | null = null;
+        const reset = () => {
+          currentBtn?.classList.remove('is-playing');
+          current = null;
+          currentBtn = null;
+        };
+        document.querySelectorAll<HTMLButtonElement>('.sfx-btn').forEach((btn) => {
+          const src = btn.dataset.audio;
+          if (!src) return;
+          const audio = new Audio(src);
+          audio.addEventListener('ended', reset);
+          btn.addEventListener('click', () => {
+            if (current === audio) {
+              audio.pause();
+              audio.currentTime = 0;
+              reset();
+              return;
+            }
+            if (current) {
+              current.pause();
+              current.currentTime = 0;
+              currentBtn?.classList.remove('is-playing');
+            }
+            audio.play().then(() => {
+              current = audio;
+              currentBtn = btn;
+              btn.classList.add('is-playing');
+            }).catch(() => {});
+          });
+        });
+      }
     </script>
   </body>
 </html>

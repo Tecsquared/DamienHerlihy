@@ -5,7 +5,7 @@ category: "Learning How to Learn"
 tag: "Star (Note)"
 featured: false
 description: "We treat attention as a trait some children have and others lack. But it isn't a quantity. It's a decision about what's relevant, and that quietly rewrites what a teacher's job actually is."
-image: "/images/posts/blog-star.jpg"
+image: "/images/menu-star.png"
 ---
 
 I can usually tell from the first lesson which student will do well in a second language. There's one sign I look for. It isn't intelligence. It isn't confidence. It isn't perfect behaviour. It's something else entirely, and I saw it in Pan from day one.

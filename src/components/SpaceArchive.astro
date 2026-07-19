@@ -1,9 +1,21 @@
 ---
 /*
-  The Space Archive — a rail flight through the back catalogue.
-  Scroll flies you along a drifting path; every post is a glowing portal,
-  newest near the launch point, oldest deepest — all of it falling toward
-  a black hole at the end of the line.
+  The Space Archive — a slow first-person drift through a hand-painted universe.
+
+  Art direction: "Painted Descent" — deep indigo, muted teal/lavender gouache
+  auroras, chalk lines, grainy star dust, warm cream/peach focal light.
+  Movement: NatGeo "Black Holes 101" — slow lateral documentary drift, one
+  elegant spacetime line, a gold dashed light-line bending into the well.
+
+  Entry: pre-rendered helmet video (hands lift a worn helmet over the camera)
+  crossfading into the live Three.js scene. HUD: "Poetic Visor" — sparse,
+  poetic status language, one active transmission, no cockpit clutter.
+
+  Post encounters: far posts are warm stars only. Approaching one materialises
+  an image-led transmission card ("a fragment of memory"); closer still, the
+  pigment dissolves into the painted sky while the title resolves in the same
+  plane (Memory Dissolve). Clicking opens the Editorial Aperture card — a
+  stable DOM dialog where the image contracts into a painterly header.
 
   Desktop + fine-motion only: phones and prefers-reduced-motion visitors
   stay on the flat list rendered by archive.astro. No JS = flat list.
@@ -25,14 +37,49 @@ interface Props {
 }
 
 const { posts, range } = Astro.props;
+
+function tagLabel(tag: string) {
+  if (tag.startsWith('Galaxy')) return 'Essay';
+  if (tag.startsWith('Star')) return 'Note';
+  if (tag.startsWith('Constellation')) return 'Pattern';
+  return 'Library';
+}
 ---
 
 <script type="application/json" id="flight-data" set:html={JSON.stringify(posts)} />
 
-<!-- Scroll track: gives the document its flight length while flying -->
+<!-- Scroll track: gives the document its journey length while drifting -->
 <div class="flight-track" id="flight-track" aria-hidden="true"></div>
 
 <canvas class="flight-canvas" id="flight-canvas" aria-hidden="true"></canvas>
+
+<!-- Unifying film grain, very low opacity -->
+<div class="grain" aria-hidden="true"></div>
+
+<!-- Helmet entry video (silent; sound pass adds one-shots later) -->
+<video
+  class="helmet"
+  id="helmet"
+  src="/archive/helmet-entry.mp4"
+  poster="/archive/helmet-entry-poster.jpg"
+  muted
+  playsinline
+  preload="none"
+  aria-hidden="true"
+></video>
+<button class="helmet-skip" id="helmet-skip" type="button" hidden>Skip intro</button>
+
+<!-- Event horizon finale (silent): plays once at the end of the descent,
+     then the end card rises over its final frame -->
+<video
+  class="finale"
+  id="finale"
+  src="/archive/event-horizon.mp4"
+  muted
+  playsinline
+  preload="none"
+  aria-hidden="true"
+></video>
 
 <!-- Visor -->
 <div class="visor" id="visor" aria-hidden="true">
@@ -41,55 +88,77 @@ const { posts, range } = Astro.props;
   <div class="visor-vignette"></div>
 </div>
 
-<!-- HUD -->
+<!-- Poetic Visor HUD -->
 <div class="hud" id="hud" aria-hidden="true">
   <div class="hud-readout">
     <span class="hud-line hud-title">✦ THE ARCHIVE</span>
-    <span class="hud-line" id="hud-sector">CALIBRATING…</span>
+    <span class="hud-line hud-status" id="hud-status"></span>
+    <span class="hud-line" id="hud-sector"></span>
   </div>
   <div class="hud-gauge">
     <div class="hud-gauge-fill" id="hud-gauge-fill"></div>
     <span class="hud-gauge-label hud-gauge-now">NOW</span>
     <span class="hud-gauge-label hud-gauge-horizon">EVENT HORIZON</span>
   </div>
-  <div class="hud-hint" id="hud-hint">SCROLL TO FLY · CLICK A PORTAL TO INSPECT</div>
+  <div class="hud-hint" id="hud-hint">SCROLL TO DRIFT</div>
   <div class="hud-controls">
     <button class="hud-btn" id="mute-btn" type="button" aria-label="Toggle sound">SOUND ON</button>
     <button class="hud-btn" id="exit-flight" type="button">FLAT VIEW</button>
   </div>
 </div>
 
-<!-- Portal preview card -->
-<aside class="focus-card" id="focus-card" aria-hidden="true">
+<!-- Keyboard path to every transmission (visually hidden until focused) -->
+<nav class="star-index" id="star-index" aria-label="Archive transmissions">
+  <span class="star-index-label eyebrow">✦ Transmissions — Enter to inspect</span>
+  {
+    posts.map((post, i) => (
+      <button type="button" class="star-index-btn" data-index={i}>
+        {post.title} · {post.dateLabel} · {tagLabel(post.tag)}
+      </button>
+    ))
+  }
+</nav>
+
+<!-- Editorial Aperture: the selected transmission -->
+<aside
+  class="focus-card"
+  id="focus-card"
+  role="dialog"
+  aria-modal="false"
+  aria-labelledby="focus-title"
+  aria-hidden="true"
+>
+  <div class="focus-aperture" id="focus-aperture" hidden>
+    <img id="focus-img" src="" alt="" />
+  </div>
   <button class="focus-close" id="focus-close" type="button" aria-label="Close preview">×</button>
-  <span class="focus-meta eyebrow" id="focus-meta"></span>
-  <h3 class="focus-title" id="focus-title"></h3>
-  <span class="focus-date" id="focus-date"></span>
-  <p class="focus-desc" id="focus-desc"></p>
-  <a class="btn focus-read" id="focus-read" href="/">Read the transmission</a>
+  <div class="focus-body">
+    <span class="focus-meta eyebrow" id="focus-meta"></span>
+    <h3 class="focus-title" id="focus-title"></h3>
+    <span class="focus-date" id="focus-date"></span>
+    <p class="focus-desc" id="focus-desc"></p>
+    <a class="btn focus-read" id="focus-read" href="/">Read the transmission</a>
+  </div>
 </aside>
 
 <!-- End of the line -->
 <div class="end-card" id="end-card" aria-hidden="true">
-  <span class="eyebrow">✦ END OF TRANSMISSION</span>
-  <h3 class="end-title">You've reached the <em>event horizon</em></h3>
-  <p class="end-copy">Nothing older survives past this point. Everything else has already fallen in.</p>
+  <span class="eyebrow">✦ EVENT HORIZON</span>
+  <h3 class="end-title">Nothing older survives <em>past this point</em></h3>
+  <p class="end-copy">Everything else has already fallen in.</p>
   <div class="end-actions">
     <button class="hud-btn" id="return-launch" type="button">RETURN TO LAUNCH</button>
-    <button class="hud-btn" id="end-flat" type="button">FLAT VIEW</button>
+    <button class="hud-btn" id="end-flat" type="button">VIEW FLAT ARCHIVE</button>
   </div>
 </div>
 
 <!-- Launch gate -->
 <div class="gate" id="gate" aria-hidden="true">
-  <span class="eyebrow gate-eyebrow">✦ DAMIEN.HERLIHY PRESENTS</span>
   <h2 class="gate-title">The <em>Archive</em></h2>
-  <p class="gate-sub">
-    {posts.length} transmissions · {range} · drifting toward the event horizon
-  </p>
+  <p class="gate-sub">{posts.length} transmissions · {range}</p>
   <button class="btn gate-launch" id="gate-launch" type="button" disabled>Calibrating…</button>
-  <button class="gate-skip" id="gate-skip" type="button">or browse the flat archive</button>
-  <span class="gate-hint">SCROLL TO FLY · MOUSE TO LOOK · CLICK A PORTAL TO INSPECT</span>
+  <button class="gate-skip" id="gate-skip" type="button">View flat archive</button>
+  <span class="gate-hint">SCROLL TO DRIFT · CLICK A STAR TO INSPECT</span>
 </div>
 
 <style>
@@ -121,6 +190,89 @@ const { posts, range } = Astro.props;
     opacity: 1;
   }
 
+  /* ===== Film grain (unifying, very low) ===== */
+  .grain {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  }
+
+  body.flying .grain {
+    display: block;
+  }
+
+  /* ===== Helmet entry ===== */
+  .helmet {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 600;
+    background: #0e0e1e;
+    opacity: 0;
+    transition: opacity 1.3s ease;
+  }
+
+  .helmet.show {
+    display: block;
+    opacity: 1;
+  }
+
+  .finale {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Above the visor and HUD, below the end card that rises over it */
+    z-index: 100;
+    background: #0e0e1e;
+    opacity: 0;
+    transition: opacity 1.6s ease;
+  }
+
+  .finale.show {
+    display: block;
+    opacity: 1;
+  }
+
+  .helmet.fading {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .helmet-skip {
+    position: fixed;
+    right: 28px;
+    bottom: 26px;
+    z-index: 610;
+    background: rgba(10, 10, 22, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--hairline-strong);
+    border-radius: 999px;
+    padding: 9px 16px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    cursor: pointer;
+    transition: color 0.3s var(--ease);
+  }
+
+  .helmet-skip:hover,
+  .helmet-skip:focus-visible {
+    color: var(--gold-bright);
+  }
+
   /* ===== Gate ===== */
   .gate {
     position: fixed;
@@ -135,7 +287,7 @@ const { posts, range } = Astro.props;
     padding: 24px;
     background:
       radial-gradient(ellipse 70% 55% at 50% 42%, rgba(217, 169, 79, 0.07), transparent 70%),
-      var(--bg-deep);
+      #0e0e1e;
     opacity: 0;
     transition: opacity 0.9s ease;
   }
@@ -219,7 +371,34 @@ const { posts, range } = Astro.props;
   .visor-vignette {
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse 92% 88% at 50% 50%, transparent 62%, rgba(4, 4, 8, 0.55) 100%);
+    background:
+      radial-gradient(ellipse 92% 88% at 50% 50%, transparent 56%, rgba(6, 6, 14, 0.72) 98%),
+      radial-gradient(ellipse 130% 90% at 50% -24%, rgba(6, 6, 14, 0.5), transparent 52%),
+      radial-gradient(ellipse 130% 90% at 50% 124%, rgba(6, 6, 14, 0.55), transparent 52%);
+  }
+
+  /* The glass itself: one elliptical hairline + curved corner shadow so the
+     world is always read through the helmet, not a bare browser viewport */
+  .visor::before {
+    content: '';
+    position: absolute;
+    inset: -7vh -5vw;
+    border-radius: 50%;
+    border: 1px solid rgba(236, 234, 227, 0.09);
+    box-shadow: inset 0 0 18vh rgba(6, 6, 14, 0.62);
+  }
+
+  /* Faint glare high on the glass */
+  .visor::after {
+    content: '';
+    position: absolute;
+    left: 12%;
+    top: 4%;
+    width: 34%;
+    height: 16%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 50% 50%, rgba(236, 234, 227, 0.035), transparent 70%);
+    transform: rotate(-8deg);
   }
 
   .visor-edge {
@@ -227,19 +406,19 @@ const { posts, range } = Astro.props;
     top: -12vh;
     bottom: -12vh;
     width: 22vw;
-    border: 1px solid rgba(236, 234, 227, 0.05);
+    border: 1px solid rgba(236, 234, 227, 0.1);
   }
 
   .visor-edge-l {
     left: -14vw;
     border-radius: 0 50% 50% 0;
-    background: linear-gradient(to right, rgba(8, 8, 13, 0.5), transparent 70%);
+    background: linear-gradient(to right, rgba(10, 10, 22, 0.62), transparent 70%);
   }
 
   .visor-edge-r {
     right: -14vw;
     border-radius: 50% 0 0 50%;
-    background: linear-gradient(to left, rgba(8, 8, 13, 0.5), transparent 70%);
+    background: linear-gradient(to left, rgba(10, 10, 22, 0.62), transparent 70%);
   }
 
   /* ===== HUD ===== */
@@ -249,10 +428,20 @@ const { posts, range } = Astro.props;
     inset: 0;
     z-index: 90;
     pointer-events: none;
+    opacity: 0;
+    transition: opacity 1.4s ease;
   }
 
   body.flying .hud {
     display: block;
+  }
+
+  .hud.on {
+    opacity: 1;
+  }
+
+  .hud.receded {
+    opacity: 0.25;
   }
 
   .hud-readout {
@@ -269,10 +458,20 @@ const { posts, range } = Astro.props;
     font-size: 10px;
     letter-spacing: 0.2em;
     color: var(--ink-faint);
+    min-height: 12px;
+    transition: opacity 0.8s ease;
   }
 
   .hud-title {
     color: var(--gold);
+  }
+
+  .hud-status {
+    color: var(--ink-dim);
+  }
+
+  .hud-status.dim {
+    opacity: 0;
   }
 
   .hud-gauge {
@@ -340,7 +539,7 @@ const { posts, range } = Astro.props;
 
   .hud-btn {
     pointer-events: auto;
-    background: rgba(8, 8, 13, 0.6);
+    background: rgba(10, 10, 22, 0.6);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--hairline-strong);
@@ -361,23 +560,79 @@ const { posts, range } = Astro.props;
     border-color: var(--gold-dim);
   }
 
-  /* ===== Focus card ===== */
+  /* ===== Keyboard star index ===== */
+  .star-index {
+    display: none;
+    position: fixed;
+    left: clamp(20px, 4vw, 48px);
+    bottom: 26px;
+    z-index: 95;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 14px;
+    background: rgba(10, 10, 22, 0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--hairline-strong);
+    border-radius: 12px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  body.flying .star-index {
+    display: flex;
+  }
+
+  body.flying .star-index:focus-within {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .star-index-label {
+    margin-bottom: 6px;
+  }
+
+  .star-index-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font-body);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink-dim);
+    padding: 3px 6px;
+    border-radius: 6px;
+  }
+
+  .star-index-btn:hover {
+    color: var(--ink);
+  }
+
+  .star-index-btn:focus-visible {
+    outline: 1px solid var(--gold);
+    color: var(--ink);
+  }
+
+  /* ===== Editorial Aperture ===== */
   .focus-card {
     position: fixed;
     z-index: 120;
     top: 50%;
     right: clamp(24px, 7vw, 110px);
     transform: translateY(-50%) translateX(24px);
-    width: min(400px, 84vw);
-    padding: 30px 30px 28px;
-    background: rgba(8, 8, 13, 0.78);
+    width: min(420px, 84vw);
+    background: rgba(10, 10, 22, 0.82);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border: 1px solid var(--hairline-strong);
     border-radius: 16px;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 12px;
     opacity: 0;
     pointer-events: none;
     transition:
@@ -391,21 +646,65 @@ const { posts, range } = Astro.props;
     transform: translateY(-50%) translateX(0);
   }
 
+  .focus-aperture {
+    position: relative;
+    height: 210px;
+    overflow: hidden;
+    transition: height 0.9s var(--ease);
+  }
+
+  .focus-card.settled .focus-aperture {
+    height: 130px;
+  }
+
+  .focus-aperture img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: saturate(0.82) contrast(0.94);
+  }
+
+  /* Painterly blend: the image sinks into the card's indigo */
+  .focus-aperture::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 120% 90% at 50% 20%, transparent 55%, rgba(10, 10, 22, 0.55) 100%),
+      linear-gradient(to bottom, rgba(10, 10, 22, 0.12), transparent 30%, rgba(10, 10, 22, 0.88) 100%);
+  }
+
+  .focus-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 24px 30px 28px;
+  }
+
   .focus-close {
     position: absolute;
     top: 12px;
     right: 16px;
-    background: none;
+    z-index: 2;
+    background: rgba(10, 10, 22, 0.5);
     border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
     color: var(--ink-faint);
-    font-size: 22px;
+    font-size: 20px;
     line-height: 1;
     cursor: pointer;
     transition: color 0.3s var(--ease);
   }
 
-  .focus-close:hover {
+  .focus-close:hover,
+  .focus-close:focus-visible {
     color: var(--ink);
+  }
+
+  .focus-meta {
+    color: var(--gold);
   }
 
   .focus-title {
@@ -451,7 +750,7 @@ const { posts, range } = Astro.props;
     align-items: center;
     gap: 14px;
     padding: 40px 34px;
-    background: rgba(8, 8, 13, 0.7);
+    background: rgba(10, 10, 22, 0.7);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--hairline-strong);
@@ -495,13 +794,14 @@ const { posts, range } = Astro.props;
     gap: 10px;
   }
 
-  /* Hide footer + noise while flying; the void needs no grain */
+  /* Hide footer while drifting; the void needs no footer */
   :global(body.flying footer) {
     display: none;
   }
 
   /* No-JS never sees any of this */
   :global(html:not(.js)) .gate,
+  :global(html:not(.js)) .helmet,
   :global(html:not(.js)) .flight-canvas {
     display: none !important;
   }
@@ -534,24 +834,32 @@ const { posts, range } = Astro.props;
   const gateLaunch = document.getElementById('gate-launch') as HTMLButtonElement;
   const gateSkip = document.getElementById('gate-skip')!;
   const track = document.getElementById('flight-track')!;
+  const helmet = document.getElementById('helmet') as HTMLVideoElement;
+  const helmetSkip = document.getElementById('helmet-skip') as HTMLButtonElement;
+  const hud = document.getElementById('hud')!;
+  const hudStatus = document.getElementById('hud-status')!;
   const hudSector = document.getElementById('hud-sector')!;
   const hudGaugeFill = document.getElementById('hud-gauge-fill')!;
   const hudHint = document.getElementById('hud-hint')!;
   const muteBtn = document.getElementById('mute-btn')!;
   const exitBtn = document.getElementById('exit-flight')!;
   const focusCard = document.getElementById('focus-card')!;
-  const focusClose = document.getElementById('focus-close')!;
+  const focusAperture = document.getElementById('focus-aperture')!;
+  const focusImg = document.getElementById('focus-img') as HTMLImageElement;
+  const focusClose = document.getElementById('focus-close') as HTMLButtonElement;
   const focusMeta = document.getElementById('focus-meta')!;
   const focusTitle = document.getElementById('focus-title')!;
   const focusDate = document.getElementById('focus-date')!;
   const focusDesc = document.getElementById('focus-desc')!;
   const focusRead = document.getElementById('focus-read') as HTMLAnchorElement;
   const endCard = document.getElementById('end-card')!;
+  const finale = document.getElementById('finale') as HTMLVideoElement;
   const returnLaunch = document.getElementById('return-launch')!;
   const endFlat = document.getElementById('end-flat')!;
   const invite = document.getElementById('flight-invite')!;
   const relaunch = document.getElementById('relaunch-flight')!;
   const flatSection = document.getElementById('flat-archive')!;
+  const starIndex = document.getElementById('star-index')!;
 
   function webglOk() {
     try {
@@ -571,22 +879,55 @@ const { posts, range } = Astro.props;
     return 'Library';
   }
 
-  const CATEGORY_COLORS: Record<string, string> = {
-    'AI & Teaching': '#d9a94f',
-    'Personal Knowledge Mgt': '#7f9bff',
-    'Second Mountain': '#e0899b',
-    'Learning How to Learn': '#6fd3c7',
-    Languages: '#b48ae0',
-  };
+  /* Chalky night-sky palette (from the pastel reference) */
+  const INK = '#eceae3';
+  const GOLD = '#d9a94f';
+  const CREAM = '#f5ecd8';
+  const AURORA_TEAL = '#6fae9f';
+  const AURORA_LAVENDER = '#8d80b8';
 
   /* =========================================================
-     Audio — synthesised, no files. Hum + portal chime.
+     Audio — Soundly selections (2026-07-12 Inbox drop) over a
+     quiet synthesised foundation. Loaded lazily after Launch;
+     every cue degrades to silence if its file fails.
      ========================================================= */
+  const SFX: Record<string, { url: string; gain: number }> = {
+    // Helmet entry (timed to the video)
+    hands: { url: '/archive/sfx/hands.mp3', gain: 0.5 },
+    lift: { url: '/archive/sfx/lift.mp3', gain: 0.5 },
+    cross: { url: '/archive/sfx/cross.mp3', gain: 0.6 },
+    seal: { url: '/archive/sfx/seal.mp3', gain: 0.55 },
+    visor: { url: '/archive/sfx/visor.mp3', gain: 0.35 },
+    breath: { url: '/archive/sfx/breath.mp3', gain: 0.5 },
+    wake: { url: '/archive/sfx/wake.mp3', gain: 0.3 },
+    // Continuous atmosphere (crossfade-looped)
+    'bed-hum': { url: '/archive/sfx/bed-hum.mp3', gain: 0.14 },
+    'bed-subs': { url: '/archive/sfx/bed-subs.mp3', gain: 0.16 },
+    aurora: { url: '/archive/sfx/aurora.mp3', gain: 0.12 },
+    // Star proximity + cards
+    dissolve: { url: '/archive/sfx/dissolve.mp3', gain: 0.3 },
+    resolve: { url: '/archive/sfx/resolve.mp3', gain: 0.13 },
+    select: { url: '/archive/sfx/select.mp3', gain: 0.4 },
+    dismiss: { url: '/archive/sfx/dismiss.mp3', gain: 0.4 },
+    // Journey and event horizon (once per flight)
+    gravity: { url: '/archive/sfx/gravity.mp3', gain: 0.3 },
+    funnel: { url: '/archive/sfx/funnel.mp3', gain: 0.35 },
+    starlight: { url: '/archive/sfx/starlight.mp3', gain: 0.2 },
+    approach: { url: '/archive/sfx/approach.mp3', gain: 0.25 },
+    arrival: { url: '/archive/sfx/arrival.mp3', gain: 0.45 },
+  };
+
   function makeAudio() {
     const ctx = new AudioContext();
     const master = ctx.createGain();
     master.gain.value = 1;
+    const descent = ctx.createGain(); // fades the bed toward the horizon
+    descent.gain.value = 1;
+    const duck = ctx.createGain(); // dips the bed while a card is open
+    duck.gain.value = 1;
     master.connect(ctx.destination);
+    descent.connect(master);
+    duck.connect(descent);
 
     // Deep hum: filtered noise + low sine
     const noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
@@ -604,16 +945,16 @@ const { posts, range } = Astro.props;
     lowpass.type = 'lowpass';
     lowpass.frequency.value = 110;
     const noiseGain = ctx.createGain();
-    noiseGain.gain.value = 0.05;
-    noise.connect(lowpass).connect(noiseGain).connect(master);
+    noiseGain.gain.value = 0.04;
+    noise.connect(lowpass).connect(noiseGain).connect(duck);
     noise.start();
 
     const drone = ctx.createOscillator();
     drone.type = 'sine';
     drone.frequency.value = 48;
     const droneGain = ctx.createGain();
-    droneGain.gain.value = 0.028;
-    drone.connect(droneGain).connect(master);
+    droneGain.gain.value = 0.024;
+    drone.connect(droneGain).connect(duck);
     drone.start();
 
     // Slow breathing on the filter
@@ -624,37 +965,143 @@ const { posts, range } = Astro.props;
     lfo.connect(lfoGain).connect(lowpass.frequency);
     lfo.start();
 
-    function chime() {
-      const t = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(660, t);
-      osc.frequency.exponentialRampToValueAtTime(990, t + 0.18);
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.07, t + 0.03);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
-      osc.connect(g).connect(master);
-      osc.start(t);
-      osc.stop(t + 1.5);
+    /* File-based layers */
+    const buffers: Record<string, AudioBuffer> = {};
+    let loadStarted = false;
+    function loadAll() {
+      if (loadStarted) return;
+      loadStarted = true;
+      for (const [name, def] of Object.entries(SFX)) {
+        fetch(def.url)
+          .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject()))
+          .then((ab) => ctx.decodeAudioData(ab))
+          .then((buf) => {
+            buffers[name] = buf;
+          })
+          .catch(() => {});
+      }
     }
 
-    return {
+    // Seamless loop via two overlapping sources with equal-power fades
+    const LOOP_OVERLAP = 2.0;
+    function loopBuffer(name: string) {
+      const g = ctx.createGain();
+      g.gain.value = SFX[name]?.gain ?? 0.1;
+      g.connect(duck);
+      let stopped = false;
+      let timer: ReturnType<typeof setTimeout>;
+      function schedule() {
+        if (stopped) return;
+        const buf = buffers[name];
+        if (!buf) {
+          timer = setTimeout(schedule, 600); // decode not finished yet
+          return;
+        }
+        const dur = Math.max(LOOP_OVERLAP * 2 + 1, buf.duration);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        const sg = ctx.createGain();
+        const t = ctx.currentTime;
+        sg.gain.setValueAtTime(0, t);
+        sg.gain.linearRampToValueAtTime(1, t + LOOP_OVERLAP);
+        sg.gain.setValueAtTime(1, t + dur - LOOP_OVERLAP);
+        sg.gain.linearRampToValueAtTime(0, t + dur);
+        src.connect(sg).connect(g);
+        src.start(t);
+        src.stop(t + dur + 0.1);
+        timer = setTimeout(schedule, (dur - LOOP_OVERLAP) * 1000);
+      }
+      schedule();
+      return {
+        stop() {
+          stopped = true;
+          clearTimeout(timer);
+          g.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
+        },
+      };
+    }
+
+    let beds: Array<{ stop(): void }> = [];
+    let swellTimer: ReturnType<typeof setTimeout> | null = null;
+
+    let lastDescent = -1;
+
+    const api = {
       ctx,
-      chime,
+      loadAll,
       setMuted(m: boolean) {
         master.gain.linearRampToValueAtTime(m ? 0 : 1, ctx.currentTime + 0.3);
       },
+      setDuck(d: boolean) {
+        duck.gain.linearRampToValueAtTime(d ? 0.5 : 1, ctx.currentTime + 0.8);
+      },
+      // v: 0 (journey) → 1 (event horizon). Pitch falls, bed thins to near-silence.
+      setDescent(v: number) {
+        if (Math.abs(v - lastDescent) < 0.01) return;
+        lastDescent = v;
+        const t = ctx.currentTime + 0.25;
+        drone.frequency.linearRampToValueAtTime(48 - 17 * v, t);
+        lowpass.frequency.linearRampToValueAtTime(110 - 62 * v, t);
+        descent.gain.linearRampToValueAtTime(1 - 0.92 * v, t);
+      },
+      cue(name: string, gainOverride?: number) {
+        const buf = buffers[name];
+        if (!buf) return;
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        const g = ctx.createGain();
+        g.gain.value = gainOverride ?? SFX[name]?.gain ?? 0.4;
+        src.connect(g).connect(master);
+        src.start();
+      },
+      startBeds() {
+        if (beds.length) return;
+        beds = [loopBuffer('bed-hum'), loopBuffer('bed-subs')];
+        // Occasional aurora swell, never on a schedule you could tap to
+        const swell = () => {
+          api.cue('aurora');
+          swellTimer = setTimeout(swell, 18000 + Math.random() * 26000);
+        };
+        swellTimer = setTimeout(swell, 9000 + Math.random() * 10000);
+      },
+      stopBeds() {
+        beds.forEach((b) => b.stop());
+        beds = [];
+        if (swellTimer) {
+          clearTimeout(swellTimer);
+          swellTimer = null;
+        }
+      },
     };
+    return api;
   }
 
   /* =========================================================
-     The flight
+     Poetic Visor status
+     ========================================================= */
+  let statusCurrent = '';
+  let statusTimer = 0;
+
+  function setStatus(text: string, holdMs = 0) {
+    if (text === statusCurrent) return;
+    if (holdMs && performance.now() < statusTimer) return;
+    statusCurrent = text;
+    if (holdMs) statusTimer = performance.now() + holdMs;
+    hudStatus.classList.add('dim');
+    setTimeout(() => {
+      hudStatus.textContent = text;
+      hudStatus.classList.remove('dim');
+    }, 400);
+  }
+
+  /* =========================================================
+     The drift
      ========================================================= */
   function init() {
     gate.classList.add('show');
     gate.setAttribute('aria-hidden', 'false');
     invite.hidden = false;
+    helmet.preload = 'auto'; // only eligible desktops pay for the video
 
     let renderer: THREE.WebGLRenderer;
     try {
@@ -668,22 +1115,111 @@ const { posts, range } = Astro.props;
     const dprCap = 2;
     renderer.setPixelRatio(Math.min(devicePixelRatio, dprCap));
     renderer.setSize(innerWidth, innerHeight);
-    renderer.setClearColor(0x050508, 1);
+    renderer.setClearColor(0x0e0e1e, 1);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x050508, 0.0028);
+    scene.fog = new THREE.FogExp2(0x0e0e1e, 0.0022);
 
-    const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 1400);
+    const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 1200);
 
-    /* ---------- Flight path ---------- */
-    const SPACING = 130;
-    const Z_FIRST = -180;
-    const zHole = Z_FIRST - posts.length * SPACING - 240;
-    const Z_END = zHole + 170; // camera stops here, staring into it
-    const Z_START = 40;
+    /* ---------- Journey geometry: a corkscrewing tunnel curve ----------
+       Pacing still breathes: Essays/Galaxies claim more room around them,
+       Notes/Stars cluster closer — chronological order preserved. Newest
+       posts sit near the entrance (u≈0); the oldest sit deepest (u≈1).
+       The whole scene is authored around ONE THREE.CatmullRomCurve3 that
+       the camera, the tube wall, the posts and the space-time thread all
+       sample from — that's what keeps everything genuinely 3D instead of
+       a flat composition dressed up to look deep. */
+    function smoothstep(edge0: number, edge1: number, x: number) {
+      const tt = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+      return tt * tt * (3 - 2 * tt);
+    }
 
-    const pathX = (z: number) => Math.sin(z * 0.008) * 18;
-    const pathY = (z: number) => Math.sin(z * 0.0047 + 1.7) * 7;
+    const D_FIRST = 240;
+    const gapFor = (p: FlightPost) =>
+      p.tag.startsWith('Galaxy') ? 200 : p.tag.startsWith('Constellation') ? 150 : 116;
+
+    const postDist: number[] = [];
+    let dCursor = D_FIRST;
+    posts.forEach((p, i) => {
+      if (i > 0) dCursor += (gapFor(posts[i - 1]) + gapFor(p)) / 2;
+      postDist.push(dCursor);
+    });
+
+    const dLast = postDist[postDist.length - 1] ?? D_FIRST;
+    const TUNNEL_TAIL = 420; // dark run-out past the oldest post, before the horizon
+    const D_TOTAL = dLast + TUNNEL_TAIL;
+
+    // Twist: barely perceptible near the entrance, more pronounced as
+    // gravity takes hold deeper in.
+    const CORK_TURNS = 2.1;
+    const corkAngle = (u: number) => Math.pow(u, 1.7) * CORK_TURNS * Math.PI * 2;
+    const corkAmpl = (u: number) => {
+      const grow = 8 + 46 * Math.min(1, u / 0.75);
+      const horizon = smoothstep(0.86, 1, u);
+      return grow * (1 - horizon * 0.92);
+    };
+
+    // Raw path shape in world space, sampled to build the authored curve.
+    // Forward runs along +X; the corkscrew lives in Y/Z; gravity pulls the
+    // last stretch down and in — the event horizon is a destination the
+    // path bends toward, not a doorway the camera just passes through.
+    function tunnelPoint(d: number) {
+      const u = Math.max(0, Math.min(1, d / D_TOTAL));
+      const a = corkAngle(u);
+      const amp = corkAmpl(u);
+      const dip = 150 * Math.pow(smoothstep(0.8, 1, u), 1.3);
+      const y = -14 + Math.sin(d * 0.006) * 4 + Math.sin(a) * amp - dip;
+      const z = Math.cos(a) * amp * 0.85 + Math.sin(d * 0.0043 + 1.7) * 6;
+      return new THREE.Vector3(d, y, z);
+    }
+
+    const CTRL_N = 240;
+    const ctrlPts: THREE.Vector3[] = [];
+    for (let i = 0; i <= CTRL_N; i++) {
+      ctrlPts.push(tunnelPoint((i / CTRL_N) * D_TOTAL));
+    }
+    const pathCurve = new THREE.CatmullRomCurve3(ctrlPts, false, 'catmullrom', 0.5);
+    pathCurve.arcLengthDivisions = 400;
+
+    // Scroll progress (0 → 1) maps directly onto the curve's own arc-length
+    // parameter, so travel speed stays constant no matter how much the
+    // corkscrew wiggles the raw x/y/z underneath it.
+    const postU = postDist.map((d) => Math.max(0, Math.min(1, d / D_TOTAL)));
+
+    // Soft, irregular oval section: wide near the entrance, tightening hard
+    // toward the horizon so the far end narrows and darkens rather than
+    // reading as an open doorway.
+    function tubeRadius(u: number) {
+      const horizon = smoothstep(0.83, 1, u);
+      const base = 88 - 20 * u;
+      return base * (1 - horizon * 0.88) + 9 * horizon;
+    }
+
+    const FRAME_SEGMENTS = 300;
+    const frenet = pathCurve.computeFrenetFrames(FRAME_SEGMENTS, false);
+    function frameAt(u: number) {
+      const i = Math.max(0, Math.min(FRAME_SEGMENTS, Math.round(u * FRAME_SEGMENTS)));
+      return {
+        tangent: frenet.tangents[i],
+        normal: frenet.normals[i],
+        binormal: frenet.binormals[i],
+      };
+    }
+    // A point on (or around) the tube wall at path-parameter u, angle theta
+    // around the ring, and radiusFrac × the local wall radius (1 = on the
+    // wall, <1 inside the volume, >1 behind the wall — useful for veils
+    // glimpsed dimly through the tunnel skin).
+    function pointOnTunnel(u: number, angle: number, radiusFrac: number) {
+      const uu = Math.max(0, Math.min(1, u));
+      const center = pathCurve.getPointAt(uu);
+      const { normal, binormal } = frameAt(uu);
+      const r = tubeRadius(uu) * radiusFrac;
+      return center
+        .clone()
+        .addScaledVector(normal, Math.cos(angle) * r)
+        .addScaledVector(binormal, Math.sin(angle) * r);
+    }
 
     /* ---------- Deterministic randomness ---------- */
     function hash(str: string) {
@@ -699,22 +1235,275 @@ const { posts, range } = Astro.props;
       };
     }
 
-    /* ---------- Starfield along the whole path ---------- */
-    const STAR_COUNT = 2400;
-    const rand = hash('the-long-way-down');
+    /* ---------- Tunnel volume: the wall the visitor travels inside ----------
+       A custom tube built from the authored curve's own Frenet frames —
+       rendered BackSide so we see the interior, a soft irregular oval
+       cross-section (never a hard circular pipe), and vertex-colour
+       variation for a cheap large-scale indigo/teal/lavender drift. Real
+       depth writes so posts can occlude against it and it against them —
+       fog-attenuated so the far tunnel dims toward the horizon rather than
+       cutting to pure black. */
+    const TUBE_LEN_SEGMENTS = 260;
+    const TUBE_RADIAL_SEGMENTS = 40;
+    const wallRand = hash('tunnel-wall');
+    const wrinklePhase: number[] = [];
+    for (let j = 0; j <= TUBE_RADIAL_SEGMENTS; j++) wrinklePhase.push(wallRand() * Math.PI * 2);
+
+    const tubeIndigo = new THREE.Color(0x14142a);
+    const tubeIndigoDeep = new THREE.Color(0x0a0a18);
+    const tubeTeal = new THREE.Color(AURORA_TEAL);
+    const tubeLavender = new THREE.Color(AURORA_LAVENDER);
+    const tmpCol = new THREE.Color();
+
+    const tubePositions: number[] = [];
+    const tubeColors: number[] = [];
+    const tubeIndices: number[] = [];
+
+    for (let i = 0; i <= TUBE_LEN_SEGMENTS; i++) {
+      const u = i / TUBE_LEN_SEGMENTS;
+      const center = pathCurve.getPointAt(u);
+      const { normal, binormal } = frameAt(u);
+      const rBase = tubeRadius(u);
+      const horizonDark = smoothstep(0.6, 1, u);
+      for (let j = 0; j <= TUBE_RADIAL_SEGMENTS; j++) {
+        const theta = (j / TUBE_RADIAL_SEGMENTS) * Math.PI * 2;
+        const oval = 1 + 0.16 * Math.cos(theta * 2);
+        const wrinkle = 1 + 0.05 * Math.sin(theta * 3 + wrinklePhase[j] + u * 9);
+        const r = rBase * oval * wrinkle;
+        const cx = Math.cos(theta) * r;
+        const cy = Math.sin(theta) * r;
+        tubePositions.push(
+          center.x + normal.x * cx + binormal.x * cy,
+          center.y + normal.y * cx + binormal.y * cy,
+          center.z + normal.z * cx + binormal.z * cy
+        );
+
+        // Larger, quieter veils: low-frequency drift so the colour reads
+        // as aurora light caught in the wall, not screen-filling patches
+        const veil = 0.5 + 0.5 * Math.sin(u * 7 + theta * 1.3);
+        const veil2 = 0.5 + 0.5 * Math.sin(u * 3.7 - theta * 2.1 + 2.0);
+        tmpCol.copy(tubeIndigo);
+        tmpCol.lerp(tubeTeal, Math.max(0, veil - 0.78) * 1.4);
+        tmpCol.lerp(tubeLavender, Math.max(0, veil2 - 0.8) * 1.5);
+        tmpCol.lerp(tubeIndigoDeep, horizonDark * 0.85);
+        tubeColors.push(tmpCol.r, tmpCol.g, tmpCol.b);
+      }
+    }
+    for (let i = 0; i < TUBE_LEN_SEGMENTS; i++) {
+      for (let j = 0; j < TUBE_RADIAL_SEGMENTS; j++) {
+        const a = i * (TUBE_RADIAL_SEGMENTS + 1) + j;
+        const b = a + TUBE_RADIAL_SEGMENTS + 1;
+        const c = a + 1;
+        const d = b + 1;
+        tubeIndices.push(a, b, c, b, d, c);
+      }
+    }
+    const tubeGeo = new THREE.BufferGeometry();
+    tubeGeo.setAttribute('position', new THREE.Float32BufferAttribute(tubePositions, 3));
+    tubeGeo.setAttribute('color', new THREE.Float32BufferAttribute(tubeColors, 3));
+    tubeGeo.setIndex(tubeIndices);
+    tubeGeo.computeVertexNormals();
+
+    const tubeMat = new THREE.MeshBasicMaterial({
+      vertexColors: true,
+      // DoubleSide rather than a strict BackSide: for a single-walled shell
+      // viewed only from inside, both render identically (one manifold, no
+      // overlapping layers to double-draw) — this just removes any risk
+      // from the ring winding direction, which isn't visually verifiable
+      // without a live render.
+      side: THREE.DoubleSide,
+      fog: true,
+      // Opaque: a translucent wall let the far side show through the near
+      // side, reading as overlapping angular sheets instead of one surface
+      transparent: false,
+      depthWrite: true,
+    });
+    const tunnelMesh = new THREE.Mesh(tubeGeo, tubeMat);
+    scene.add(tunnelMesh);
+
+    /* ---------- Texture helpers (canvas-drawn, chalky) ---------- */
+    function radialGlowTexture(inner: string, outer: string, hardness = 0.0) {
+      const c = document.createElement('canvas');
+      c.width = c.height = 256;
+      const g = c.getContext('2d')!;
+      const grad = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+      grad.addColorStop(0, inner);
+      grad.addColorStop(Math.max(0.01, hardness), inner);
+      grad.addColorStop(1, outer);
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 256, 256);
+      return new THREE.CanvasTexture(c);
+    }
+
+    // A warm hand-drawn star. Essays get longer chalk rays; notes stay quiet.
+    function postStarTexture(rays: boolean) {
+      const c = document.createElement('canvas');
+      c.width = c.height = 256;
+      const g = c.getContext('2d')!;
+      let grad = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+      grad.addColorStop(0, 'rgba(232, 168, 107, 0.85)');
+      grad.addColorStop(0.35, 'rgba(220, 140, 90, 0.30)');
+      grad.addColorStop(1, 'rgba(220, 140, 90, 0)');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 256, 256);
+
+      if (rays) {
+        g.save();
+        g.translate(128, 128);
+        g.strokeStyle = 'rgba(245, 236, 216, 0.5)';
+        g.lineWidth = 2.2;
+        g.lineCap = 'round';
+        for (let i = 0; i < 4; i++) {
+          const a = (i * Math.PI) / 2 + Math.PI / 4;
+          g.beginPath();
+          g.moveTo(Math.cos(a) * 58, Math.sin(a) * 58);
+          g.lineTo(Math.cos(a) * 112, Math.sin(a) * 112);
+          g.stroke();
+        }
+        g.restore();
+      }
+
+      // Five-point star, softly blurred edges
+      g.save();
+      g.translate(128, 128);
+      g.rotate(-Math.PI / 2);
+      g.beginPath();
+      const R = 44;
+      const r = 19;
+      for (let i = 0; i < 10; i++) {
+        const rad = i % 2 === 0 ? R : r;
+        const a = (i * Math.PI) / 5;
+        g[i === 0 ? 'moveTo' : 'lineTo'](Math.cos(a) * rad, Math.sin(a) * rad);
+      }
+      g.closePath();
+      g.shadowColor = 'rgba(245, 236, 216, 0.9)';
+      g.shadowBlur = 18;
+      g.fillStyle = CREAM;
+      g.fill();
+      g.restore();
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.anisotropy = 4;
+      return tex;
+    }
+
+    // Aurora ribbon: horizontal chalky streaks with soft falloff
+    function auroraTexture(hex: string, seed: string) {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 256;
+      const g = c.getContext('2d')!;
+      const r = hash(seed);
+      for (let band = 0; band < 5; band++) {
+        const yC = 40 + r() * 176;
+        const thick = 14 + r() * 34;
+        const grad = g.createLinearGradient(0, yC - thick, 0, yC + thick);
+        grad.addColorStop(0, hex + '00');
+        grad.addColorStop(0.5, hex + (band === 0 ? '2e' : '1c'));
+        grad.addColorStop(1, hex + '00');
+        g.fillStyle = grad;
+        g.beginPath();
+        g.moveTo(0, yC);
+        for (let x = 0; x <= 512; x += 16) {
+          g.lineTo(x, yC + Math.sin(x * 0.012 + r() * 6) * 18 - thick);
+        }
+        for (let x = 512; x >= 0; x -= 16) {
+          g.lineTo(x, yC + Math.sin(x * 0.011 + r() * 6) * 18 + thick);
+        }
+        g.closePath();
+        g.fill();
+      }
+      return new THREE.CanvasTexture(c);
+    }
+
+    // Title + metadata that resolve out of the dissolving image
+    function plaqueTexture(post: FlightPost) {
+      const c = document.createElement('canvas');
+      c.width = 1024;
+      c.height = 224;
+      const g = c.getContext('2d')!;
+      g.textAlign = 'center';
+      g.fillStyle = INK;
+      let size = 54;
+      g.font = `500 ${size}px Fraunces, Georgia, serif`;
+      while (g.measureText(post.title).width > 940 && size > 30) {
+        size -= 3;
+        g.font = `500 ${size}px Fraunces, Georgia, serif`;
+      }
+      if (g.measureText(post.title).width > 940) {
+        const words = post.title.split(' ');
+        let l1 = '';
+        let l2 = '';
+        for (const w of words) {
+          if (g.measureText(l1 + ' ' + w).width < 860 && !l2) l1 = (l1 + ' ' + w).trim();
+          else l2 = (l2 + ' ' + w).trim();
+        }
+        g.fillText(l1, 512, 84);
+        g.fillText(l2, 512, 84 + size * 1.15);
+      } else {
+        g.fillText(post.title, 512, 104);
+      }
+      g.font = '400 25px "Space Mono", monospace';
+      g.fillStyle = GOLD;
+      g.fillText(`${post.dateLabel}  ✦  ${tagLabel(post.tag).toUpperCase()}`, 512, 192);
+      const tex = new THREE.CanvasTexture(c);
+      tex.anisotropy = 4;
+      return tex;
+    }
+
+    // Big faint spaced-out year marker, NatGeo-diagram style
+    function yearTexture(year: number) {
+      const c = document.createElement('canvas');
+      c.width = 1024;
+      c.height = 256;
+      const g = c.getContext('2d')!;
+      g.textAlign = 'center';
+      g.font = '700 150px "Space Mono", monospace';
+      g.fillStyle = 'rgba(236, 234, 227, 0.85)';
+      const spaced = String(year).split('').join(' ');
+      g.fillText(spaced, 512, 180);
+      return new THREE.CanvasTexture(c);
+    }
+
+    // Shared soft noise for the Memory Dissolve shader
+    function noiseTexture() {
+      const c = document.createElement('canvas');
+      c.width = c.height = 128;
+      const g = c.getContext('2d')!;
+      const r = hash('pigment');
+      const img = g.createImageData(128, 128);
+      for (let i = 0; i < img.data.length; i += 4) {
+        const v = Math.floor(r() * 255);
+        img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+        img.data[i + 3] = 255;
+      }
+      g.putImageData(img, 0, 0);
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    }
+
+    /* ---------- Starfield: sparse chalky speckle, now scattered through
+       and just beyond the tube volume as a depth cue rather than an open
+       sky ---------- */
+    const STAR_COUNT = 1400;
+    const rand = hash('the-long-way-inward');
     const sPos = new Float32Array(STAR_COUNT * 3);
     const sSize = new Float32Array(STAR_COUNT);
     const sPhase = new Float32Array(STAR_COUNT);
     const sSpeed = new Float32Array(STAR_COUNT);
 
     for (let i = 0; i < STAR_COUNT; i++) {
-      const z = 80 - rand() * (80 - (zHole - 500));
-      sPos[i * 3] = pathX(z) + (rand() - 0.5) * 700;
-      sPos[i * 3 + 1] = pathY(z) + (rand() - 0.5) * 500;
-      sPos[i * 3 + 2] = z;
-      sSize[i] = 0.7 + rand() * 2.1;
+      const u = rand();
+      const angle = rand() * Math.PI * 2;
+      const radiusFrac = 0.05 + rand() * 1.35; // mostly inside the tube, a few glimpsed beyond the wall
+      const p = pointOnTunnel(u, angle, radiusFrac);
+      sPos[i * 3] = p.x;
+      sPos[i * 3 + 1] = p.y;
+      sPos[i * 3 + 2] = p.z;
+      sSize[i] = 0.5 + rand() * 1.7;
       sPhase[i] = rand();
-      sSpeed[i] = 0.3 + rand() * 1.4;
+      sSpeed[i] = 0.2 + rand() * 1.0;
     }
 
     const starGeo = new THREE.BufferGeometry();
@@ -726,10 +1515,10 @@ const { posts, range } = Astro.props;
     const starMat = new THREE.ShaderMaterial({
       transparent: true,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
       uniforms: {
         uTime: { value: 0 },
         uPx: { value: Math.min(devicePixelRatio, dprCap) },
+        uAlpha: { value: 0.7 },
       },
       vertexShader: `
         attribute float aSize;
@@ -742,299 +1531,443 @@ const { posts, range } = Astro.props;
           vPhase = aPhase;
           vSpeed = aSpeed;
           vec4 mv = modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = clamp(aSize * uPx * (200.0 / -mv.z), 0.0, 7.0);
+          gl_PointSize = clamp(aSize * uPx * (170.0 / -mv.z), 0.0, 6.0);
           gl_Position = projectionMatrix * mv;
         }
       `,
       fragmentShader: `
         uniform float uTime;
+        uniform float uAlpha;
         varying float vPhase;
         varying float vSpeed;
         void main() {
           float d = distance(gl_PointCoord, vec2(0.5));
-          float core = smoothstep(0.5, 0.04, d);
-          float tw = 0.55 + 0.45 * sin(uTime * vSpeed + vPhase * 6.28318);
+          float core = smoothstep(0.5, 0.08, d);
+          float tw = 0.6 + 0.4 * sin(uTime * vSpeed + vPhase * 6.28318);
           vec3 warm = vec3(0.93, 0.91, 0.86);
-          vec3 cool = vec3(0.74, 0.78, 0.95);
-          vec3 col = mix(warm, cool, step(0.55, fract(vPhase * 7.31)));
-          gl_FragColor = vec4(col, core * tw * 0.85);
+          vec3 lav = vec3(0.78, 0.75, 0.88);
+          vec3 col = mix(warm, lav, step(0.6, fract(vPhase * 7.31)));
+          gl_FragColor = vec4(col, core * tw * uAlpha);
         }
       `,
     });
     scene.add(new THREE.Points(starGeo, starMat));
 
-    /* ---------- Nebulae: soft colour along the way ---------- */
-    function nebulaTexture(hex: string) {
-      const c = document.createElement('canvas');
-      c.width = c.height = 256;
-      const g = c.getContext('2d')!;
-      const grad = g.createRadialGradient(128, 128, 0, 128, 128, 128);
-      grad.addColorStop(0, hex + '55');
-      grad.addColorStop(0.5, hex + '18');
-      grad.addColorStop(1, hex + '00');
-      g.fillStyle = grad;
-      g.fillRect(0, 0, 256, 256);
-      return new THREE.CanvasTexture(c);
+    /* ---------- Depth dust: two extra speckle fields, now placed as bands
+       of radiusFrac around the tunnel wall so their parallax separates the
+       tube into layers as the camera travels the curve ---------- */
+    function dustField(
+      seed: string,
+      count: number,
+      radiusMin: number,
+      radiusMax: number,
+      sizeMin: number,
+      sizeMax: number,
+      alpha: number
+    ) {
+      const r = hash(seed);
+      const pos = new Float32Array(count * 3);
+      const size = new Float32Array(count);
+      const phase = new Float32Array(count);
+      const speed = new Float32Array(count);
+      for (let i = 0; i < count; i++) {
+        const u = r();
+        const angle = r() * Math.PI * 2;
+        const radiusFrac = radiusMin + r() * (radiusMax - radiusMin);
+        const p = pointOnTunnel(u, angle, radiusFrac);
+        pos[i * 3] = p.x;
+        pos[i * 3 + 1] = p.y;
+        pos[i * 3 + 2] = p.z;
+        size[i] = sizeMin + r() * (sizeMax - sizeMin);
+        phase[i] = r();
+        speed[i] = 0.2 + r() * 0.9;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+      geo.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
+      geo.setAttribute('aSpeed', new THREE.BufferAttribute(speed, 1));
+      const mat = starMat.clone();
+      mat.uniforms.uAlpha.value = alpha;
+      const pts = new THREE.Points(geo, mat);
+      scene.add(pts);
+      return mat;
     }
+    // Mid-ground grain drifting inside the tube — the strongest depth cue
+    // once the camera is truly inside a volume rather than an open field
+    const midDustMat = dustField('mid-dust', 500, 0.15, 0.85, 0.6, 1.6, 0.3);
+    // Sparse near motes that whip past the visor, just inside the wall
+    const nearDustMat = dustField('near-motes', 90, 0.05, 0.4, 1.4, 2.6, 0.16);
 
-    const nebulaHues = Object.values(CATEGORY_COLORS);
-    const nRand = hash('nebulae');
-    for (let i = 0; i < 6; i++) {
+    /* ---------- Aurora veils, glimpsed dimly beyond the tunnel skin ---------- */
+    const aRand = hash('aurora-veils');
+    const auroraHues = [AURORA_TEAL, AURORA_LAVENDER, AURORA_TEAL, AURORA_LAVENDER, AURORA_TEAL];
+    const auroras: THREE.Sprite[] = [];
+    for (let i = 0; i < 5; i++) {
       const mat = new THREE.SpriteMaterial({
-        map: nebulaTexture(nebulaHues[i % nebulaHues.length]),
+        map: auroraTexture(auroraHues[i], 'veil-' + i),
         transparent: true,
-        opacity: 0.4,
+        opacity: 0.3,
         depthWrite: false,
-        blending: THREE.AdditiveBlending,
       });
-      const sprite = new THREE.Sprite(mat);
-      const z = Z_FIRST - (i / 5.2) * (Z_FIRST - zHole) - 80;
-      sprite.position.set(
-        pathX(z) + (nRand() - 0.5) * 480,
-        pathY(z) + (nRand() - 0.5) * 300,
-        z - 160
-      );
-      const s = 420 + nRand() * 280;
-      sprite.scale.set(s, s, 1);
-      scene.add(sprite);
+      const s = new THREE.Sprite(mat);
+      const u = Math.min(0.92, (i / 4) * 0.82 + aRand() * 0.06);
+      const angle = aRand() * Math.PI * 2;
+      // Inside the (now opaque) wall so their glow washes across it
+      const pos = pointOnTunnel(u, angle, 0.78 + aRand() * 0.12);
+      s.position.copy(pos);
+      s.scale.set(340 + aRand() * 140, 190 + aRand() * 70, 1);
+      scene.add(s);
+      auroras.push(s);
     }
+    const auroraBaseY = auroras.map((a) => a.position.y);
 
-    /* ---------- Portals ---------- */
+    /* ---------- The spacetime line + gold light-line ----------
+       Both threads now literally follow the authored curve — offset a
+       little off-axis so the camera doesn't ride directly on top of them —
+       so they visibly curve with the corkscrew and draw toward the
+       horizon exactly where the camera itself is heading. */
+    const LINE_SAMPLES = 340;
+    const linePts: THREE.Vector3[] = [];
+    for (let k = 0; k <= LINE_SAMPLES; k++) {
+      linePts.push(pointOnTunnel(k / LINE_SAMPLES, -Math.PI / 2, 0.3));
+    }
+    const spaceLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(linePts),
+      new THREE.LineBasicMaterial({ color: 0xcfd0dc, transparent: true, opacity: 0.34, fog: true })
+    );
+    scene.add(spaceLine);
+
+    const GOLD_END_U = 0.97; // the gold line stops short of the horizon itself
+    const goldPts: THREE.Vector3[] = [];
+    for (let k = 0; k <= LINE_SAMPLES; k++) {
+      goldPts.push(pointOnTunnel((k / LINE_SAMPLES) * GOLD_END_U, -Math.PI / 2, 0.32));
+    }
+    const goldGeo = new THREE.BufferGeometry().setFromPoints(goldPts);
+    const goldMat = new THREE.LineDashedMaterial({
+      color: 0xd9a94f,
+      transparent: true,
+      opacity: 0.55,
+      dashSize: 6,
+      gapSize: 7,
+      fog: true,
+    });
+    const goldLine = new THREE.Line(goldGeo, goldMat);
+    goldLine.computeLineDistances();
+    goldLine.geometry.setDrawRange(0, 0);
+    scene.add(goldLine);
+    const goldTotal = goldPts.length;
+
+    /* ---------- Post stars + proximity transmission cards ----------
+       Far: a warm star only. Entering range: an image-led card
+       materialises ("a fragment of memory"). Near: Memory Dissolve —
+       pigment melts into the sky while title/metadata resolve in the
+       same plane. Only the nearest two cards may be visible at once. */
+    const noiseTex = noiseTexture();
+    const essayStarTex = postStarTexture(true);
+    const noteStarTex = postStarTexture(false);
     const texLoader = new THREE.TextureLoader();
-    const ringMats: THREE.ShaderMaterial[] = [];
-    const discMeshes: THREE.Mesh[] = [];
-    const portalPos: THREE.Vector3[] = [];
-    const chimed: boolean[] = posts.map(() => false);
 
-    function coverFit(tex: THREE.Texture) {
-      const img = tex.image as HTMLImageElement;
-      const ia = img.width / img.height;
-      if (ia > 1) {
-        tex.repeat.set(1 / ia, 1);
-        tex.offset.x = (1 - 1 / ia) / 2;
-      } else {
-        tex.repeat.set(1, ia);
-        tex.offset.y = (1 - ia) / 2;
+    const CARD_W = 34;
+    const CARD_H = 21;
+
+    const dissolveVert = `
+      varying vec2 vUv;
+      #include <fog_pars_vertex>
+      void main() {
+        vUv = uv;
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        #include <fog_vertex>
       }
+    `;
+    const dissolveFrag = `
+      uniform sampler2D uMap;
+      uniform sampler2D uNoise;
+      uniform float uReveal;   // 0 → 1 : card materialises out of the dark
+      uniform float uDissolve; // 0 → 1 : pigment melts into the painted sky
+      uniform vec2 uCover;     // cover-fit UV scale
+      varying vec2 vUv;
+      #include <fog_pars_fragment>
+      void main() {
+        vec2 uv = (vUv - 0.5) * uCover + 0.5;
+        vec4 tex = texture2D(uMap, uv);
+        float n = texture2D(uNoise, vUv * 1.7).r;
+        // materialise with irregular pigment edges
+        float appear = smoothstep(n - 0.3, n + 0.08, uReveal * 1.35);
+        // dissolve erodes irregularly, desaturating as it goes
+        float retain = 1.0 - smoothstep(n - 0.25, n + 0.18, uDissolve * 1.25);
+        float g = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
+        vec3 col = mix(tex.rgb, mix(tex.rgb, vec3(g), 0.4) * 0.9, uDissolve);
+        // soft oval mask: a memory fragment, not a thumbnail
+        vec2 c = vUv - 0.5;
+        float oval = smoothstep(0.52, 0.26, length(c * vec2(1.0, 1.5)));
+        gl_FragColor = vec4(col, appear * retain * oval * 0.92);
+        if (gl_FragColor.a < 0.003) discard;
+        #include <fog_fragment>
+      }
+    `;
+
+    interface Encounter {
+      star: THREE.Sprite;
+      baseScale: number;
+      u: number; // parameter along the authored curve
+      center: THREE.Vector3; // curve point at u (for the focus fly-in pose)
+      outward: THREE.Vector3; // unit vector from the axis out to this post
+      titleMesh: THREE.Mesh;
+      titleMat: THREE.MeshBasicMaterial;
+      cardMesh: THREE.Mesh | null;
+      cardMat: THREE.ShaderMaterial | null;
+      imageRequested: boolean;
+      reveal: number;
+      dissolve: number;
+      titleA: number;
+      announced: boolean;
+      chimed: boolean;
+      resolved: boolean;
     }
 
-    function plaqueTexture(post: FlightPost, color: string) {
-      const c = document.createElement('canvas');
-      c.width = 1024;
-      c.height = 224;
-      const g = c.getContext('2d')!;
-      g.textAlign = 'center';
-      g.fillStyle = '#eceae3';
-      let size = 58;
-      g.font = `500 ${size}px Fraunces, Georgia, serif`;
-      while (g.measureText(post.title).width > 960 && size > 30) {
-        size -= 3;
-        g.font = `500 ${size}px Fraunces, Georgia, serif`;
-      }
-      if (g.measureText(post.title).width > 960) {
-        // Two lines
-        const words = post.title.split(' ');
-        let l1 = '';
-        let l2 = '';
-        for (const w of words) {
-          if (g.measureText(l1 + ' ' + w).width < 880 && !l2) l1 = (l1 + ' ' + w).trim();
-          else l2 = (l2 + ' ' + w).trim();
-        }
-        g.fillText(l1, 512, 86);
-        g.fillText(l2, 512, 86 + size * 1.15);
-      } else {
-        g.fillText(post.title, 512, 108);
-      }
-      g.font = '400 26px "Space Mono", monospace';
-      g.fillStyle = color;
-      g.fillText(`${post.dateLabel}  ✦  ${tagLabel(post.tag).toUpperCase()}`, 512, 196);
-      const tex = new THREE.CanvasTexture(c);
-      tex.anisotropy = 4;
-      return tex;
-    }
+    const encounters: Encounter[] = [];
+    const starSprites: THREE.Sprite[] = [];
+    const starPos: THREE.Vector3[] = [];
+    const starBoost: number[] = posts.map(() => 0);
+    const constellationPts: THREE.Vector3[] = [];
 
-    const ringShader = {
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 uColor;
-        uniform float uTime;
-        uniform float uSeed;
-        uniform float uBoost;
-        varying vec2 vUv;
-        void main() {
-          vec2 p = vUv - 0.5;
-          float r = length(p) * 2.0;
-          float pulse = 0.82 + 0.18 * sin(uTime * 1.6 + uSeed);
-          float band = smoothstep(0.10, 0.0, abs(r - 0.74));
-          float halo = smoothstep(0.5, 0.0, abs(r - 0.74)) * 0.35;
-          float a = (band + halo) * pulse * (0.75 + uBoost);
-          gl_FragColor = vec4(uColor * (1.0 + uBoost * 0.6), a);
-        }
-      `,
-    };
-
-    const DISC_R = 11;
+    /* Card legibility scales with how deep a post reads on approach —
+       essays get a touch more room since they carry more weight. */
+    const CARD_SCALE_BY_BAND = [0.68, 1.0, 1.5];
 
     posts.forEach((post, i) => {
       const r = hash(post.slug);
+      const isEssay = post.tag.startsWith('Galaxy');
       const side = i % 2 === 0 ? 1 : -1;
-      const z = Z_FIRST - i * SPACING;
-      const x = pathX(z) + side * (27 + r() * 8);
-      const y = pathY(z) + (r() - 0.5) * 10;
-      const group = new THREE.Group();
-      group.position.set(x, y, z);
-      // Face the approaching flyer
-      group.lookAt(pathX(z + 110), pathY(z + 110), z + 110);
-      scene.add(group);
-      portalPos.push(new THREE.Vector3(x, y, z));
+      const band = isEssay ? 0 : i % 3;
+      const u = postU[i];
+      const angleJitter = (r() - 0.5) * 0.7;
+      const angle = side * (Math.PI * 0.42) + angleJitter; // alternating left/right walls, organic spread
+      const radiusFrac = 0.6 + r() * 0.2; // set back from the wall, inside the tube volume
+      const center = pathCurve.getPointAt(u);
+      const { normal, binormal } = frameAt(u);
+      const outward = normal
+        .clone()
+        .multiplyScalar(Math.cos(angle))
+        .add(binormal.clone().multiplyScalar(Math.sin(angle)))
+        .normalize();
+      const starPosition = pointOnTunnel(u, angle, radiusFrac);
 
-      const color = new THREE.Color(CATEGORY_COLORS[post.category] || '#d9a94f');
-
-      const ringMat = new THREE.ShaderMaterial({
+      const mat = new THREE.SpriteMaterial({
+        map: isEssay ? essayStarTex : noteStarTex,
         transparent: true,
+        opacity: 0.92,
         depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        uniforms: {
-          uColor: { value: color },
-          uTime: { value: 0 },
-          uSeed: { value: r() * 6.28 },
-          uBoost: { value: 0 },
-        },
-        ...ringShader,
       });
-      ringMats.push(ringMat);
-      const ring = new THREE.Mesh(new THREE.PlaneGeometry(DISC_R * 3.1, DISC_R * 3.1), ringMat);
-      group.add(ring);
+      const star = new THREE.Sprite(mat);
+      star.position.copy(starPosition);
+      const sc = (isEssay ? 21 : 14) + r() * 4;
+      star.scale.set(sc, sc, 1);
+      star.userData.index = i;
+      scene.add(star);
+      starSprites.push(star);
+      starPos.push(star.position.clone());
+      constellationPts.push(star.position.clone());
 
-      const discMat = new THREE.MeshBasicMaterial({ color: 0x777777 });
-      const disc = new THREE.Mesh(new THREE.CircleGeometry(DISC_R, 48), discMat);
-      disc.userData.index = i;
-      group.add(disc);
-      discMeshes.push(disc);
+      // Title + image cards sit a little further out along the same radial
+      // spoke as the star, oriented to face back down the tunnel toward
+      // the axis — using the local frame's normal as "up" so the panel
+      // visibly rolls with the corkscrew as it recedes.
+      const cardScale = CARD_SCALE_BY_BAND[band];
+      const cardCenterPos = pointOnTunnel(u, angle, radiusFrac + 0.05);
+      const localUp = normal;
 
+      const titleMat = new THREE.MeshBasicMaterial({
+        map: plaqueTexture(post),
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        fog: true,
+      });
+      const titleMesh = new THREE.Mesh(new THREE.PlaneGeometry(34, 34 * (224 / 1024)), titleMat);
+      titleMesh.position.copy(cardCenterPos).addScaledVector(localUp, -CARD_H * 0.32 * cardScale);
+      titleMesh.up.copy(localUp);
+      // lookAt already turns the plane's front (+z) in toward the route;
+      // a further rotateY(π) showed the visitor its BACK — mirrored text
+      titleMesh.lookAt(center);
+      titleMesh.scale.setScalar(cardScale);
+      scene.add(titleMesh);
+
+      encounters.push({
+        star,
+        baseScale: sc,
+        u,
+        center: center.clone(),
+        outward,
+        titleMesh,
+        titleMat,
+        cardMesh: null,
+        cardMat: null,
+        imageRequested: false,
+        reveal: 0,
+        dissolve: 0,
+        titleA: 0,
+        announced: false,
+        chimed: false,
+        resolved: false,
+      });
+
+      // Image card is created lazily the first time the camera approaches
       if (post.image) {
-        texLoader.load(post.image, (tex) => {
-          tex.colorSpace = THREE.SRGBColorSpace;
-          coverFit(tex);
-          discMat.map = tex;
-          discMat.color.set(0xbdbdbd); // slightly dimmed until hover
-          discMat.needsUpdate = true;
-        });
+        const enc = encounters[i];
+        enc.imageRequested = false;
+        enc.star.userData.makeCard = () => {
+          if (enc.cardMesh) return;
+          texLoader.load(
+            post.image,
+            (tex) => {
+              tex.colorSpace = THREE.SRGBColorSpace;
+              const imgAspect =
+                tex.image && tex.image.width ? tex.image.width / tex.image.height : 1.6;
+              const planeAspect = CARD_W / CARD_H;
+              const cover =
+                imgAspect > planeAspect
+                  ? new THREE.Vector2(planeAspect / imgAspect, 1)
+                  : new THREE.Vector2(1, imgAspect / planeAspect);
+              const cardMat = new THREE.ShaderMaterial({
+                transparent: true,
+                depthWrite: true,
+                side: THREE.DoubleSide,
+                fog: true,
+                uniforms: {
+                  // fog: true on a ShaderMaterial needs the fog uniforms
+                  // present, or three crashes writing fogColor on undefined
+                  ...THREE.UniformsUtils.clone(THREE.UniformsLib.fog),
+                  uMap: { value: tex },
+                  uNoise: { value: noiseTex },
+                  uReveal: { value: 0 },
+                  uDissolve: { value: 0 },
+                  uCover: { value: cover },
+                },
+                vertexShader: dissolveVert,
+                fragmentShader: dissolveFrag,
+              });
+              const cardMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(CARD_W, CARD_H),
+                cardMat
+              );
+              cardMesh.position
+                .copy(cardCenterPos)
+                .addScaledVector(localUp, CARD_H * 0.3 * cardScale);
+              cardMesh.up.copy(localUp);
+              cardMesh.lookAt(center); // front faces the route; no flip, or the image mirrors
+              cardMesh.scale.setScalar(cardScale);
+              scene.add(cardMesh);
+              enc.cardMesh = cardMesh;
+              enc.cardMat = cardMat;
+            },
+            undefined,
+            () => {
+              /* image failed: the star and title state carry the encounter */
+            }
+          );
+        };
       }
-
-      const plaque = new THREE.Mesh(
-        new THREE.PlaneGeometry(30, 30 * (224 / 1024)),
-        new THREE.MeshBasicMaterial({
-          map: plaqueTexture(post, CATEGORY_COLORS[post.category] || '#d9a94f'),
-          transparent: true,
-          depthWrite: false,
-        })
-      );
-      plaque.position.y = -DISC_R - 6.4;
-      group.add(plaque);
     });
 
-    /* ---------- The black hole ---------- */
+    // Chalky constellation thread linking the stars
+    const threadMat = new THREE.LineBasicMaterial({
+      color: 0xdad7cc,
+      transparent: true,
+      opacity: 0.14,
+    });
+    const thread = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(constellationPts),
+      threadMat
+    );
+    scene.add(thread);
+
+    /* ---------- Year markers, embedded in the curved darkness ----------
+       Faint and huge, following the tunnel rather than sitting flat
+       across the screen. */
+    // Wall-mounted planes, not sprites: billboarding made the digits float
+    // free of the tunnel. These lie against the curved darkness, baseline
+    // running with the direction of travel, and roll with the corkscrew.
+    const yearMeshes: THREE.Mesh[] = [];
+    let prevYear = -1;
+    posts.forEach((post, i) => {
+      if (post.year === prevYear) return;
+      prevYear = post.year;
+      const mat = new THREE.MeshBasicMaterial({
+        map: yearTexture(post.year),
+        transparent: true,
+        opacity: 0.1,
+        depthWrite: false,
+        fog: true,
+        side: THREE.DoubleSide,
+      });
+      const s = new THREE.Mesh(new THREE.PlaneGeometry(150, 37.5), mat);
+      const u = Math.max(0, postU[i] - 0.01);
+      const angle = Math.PI / 2 + (yearMeshes.length % 2 === 0 ? 0 : Math.PI);
+      const pos = pointOnTunnel(u, angle, 0.8);
+      s.position.copy(pos);
+      // Basis: face the plane back in toward the route (z = inward) and
+      // take its "up" from the camera's own Frenet up at this depth, so a
+      // visitor rolling with the corkscrew reads the digits upright and
+      // unmirrored, painted on the wall.
+      const { normal } = frameAt(u);
+      const inward = pathCurve.getPointAt(u).clone().sub(pos).normalize();
+      const yAxis = normal.clone().addScaledVector(inward, -normal.dot(inward)).normalize();
+      const xAxis = new THREE.Vector3().crossVectors(yAxis, inward).normalize();
+      s.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(xAxis, yAxis, inward));
+      scene.add(s);
+      yearMeshes.push(s);
+    });
+
+    /* ---------- The dark star at the event horizon, u = 1 ---------- */
     const holeGroup = new THREE.Group();
-    holeGroup.position.set(pathX(zHole), pathY(zHole), zHole);
+    holeGroup.position.copy(pathCurve.getPointAt(1));
     scene.add(holeGroup);
 
-    // Accretion disc — tilted, swirling
-    const discPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(210, 210),
-      new THREE.ShaderMaterial({
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        uniforms: { uTime: { value: 0 } },
-        vertexShader: `
-          varying vec2 vUv;
-          void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: `
-          uniform float uTime;
-          varying vec2 vUv;
-          void main() {
-            vec2 p = vUv - 0.5;
-            float r = length(p) * 2.0;
-            float ang = atan(p.y, p.x);
-            float swirl = ang + uTime * 0.22 + 2.6 / (r + 0.22);
-            float bands = 0.55 + 0.45 * sin(swirl * 5.0 + r * 20.0);
-            float disc = smoothstep(1.0, 0.5, r) * smoothstep(0.16, 0.36, r);
-            vec3 inner = vec3(1.0, 0.82, 0.45);
-            vec3 outer = vec3(0.72, 0.45, 0.95);
-            vec3 col = mix(inner, outer, smoothstep(0.25, 0.95, r));
-            col = mix(col, vec3(1.0, 0.95, 0.8), bands * 0.3);
-            float a = disc * (0.3 + 0.7 * bands);
-            gl_FragColor = vec4(col, a);
-          }
-        `,
-      })
-    );
-    discPlane.rotation.x = -1.25;
-    discPlane.rotation.y = 0.18;
-    holeGroup.add(discPlane);
+    // The black hole itself: the supplied painting, its square edges
+    // feathered away on a canvas so it melts into the surrounding dark.
+    // The finale film opens on the same subject, so arrival crossfades
+    // from this still into motion seamlessly.
+    let holeSprite: THREE.Sprite | null = null;
+    const holeImg = new Image();
+    holeImg.src = '/archive/black-hole.jpg';
+    holeImg.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = c.height = 1024;
+      const g = c.getContext('2d')!;
+      g.drawImage(holeImg, 0, 0, 1024, 1024);
+      // Circular mask: solid disc, brief feather — a rotating round body,
+      // not a soft square wash
+      g.globalCompositeOperation = 'destination-in';
+      const fade = g.createRadialGradient(512, 512, 390, 512, 512, 500);
+      fade.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      fade.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      g.fillStyle = fade;
+      g.fillRect(0, 0, 1024, 1024);
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const hole = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: tex,
+          transparent: true,
+          opacity: 1,
+          depthWrite: false,
+          // Drawn over everything in the scene: the tapering tube end
+          // otherwise occludes it as a lumpy silhouette
+          depthTest: false,
+        })
+      );
+      hole.renderOrder = 20;
+      hole.scale.set(200, 200, 1);
+      holeGroup.add(hole);
+      holeSprite = hole;
+    };
 
-    // The hole itself: opaque black core + photon rim, always facing camera
-    const core = new THREE.Mesh(
-      new THREE.CircleGeometry(15, 64),
-      new THREE.MeshBasicMaterial({ color: 0x000000 })
-    );
-    holeGroup.add(core);
-
-    const rim = new THREE.Mesh(
-      new THREE.PlaneGeometry(36, 36),
-      new THREE.ShaderMaterial({
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        uniforms: { uTime: { value: 0 } },
-        vertexShader: `
-          varying vec2 vUv;
-          void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: `
-          uniform float uTime;
-          varying vec2 vUv;
-          void main() {
-            vec2 p = vUv - 0.5;
-            float r = length(p) * 2.0;
-            float rim = smoothstep(0.09, 0.0, abs(r - 0.86));
-            float flicker = 0.85 + 0.15 * sin(uTime * 3.0 + r * 10.0);
-            gl_FragColor = vec4(vec3(1.0, 0.85, 0.55) * flicker, rim * 0.9);
-          }
-        `,
-      })
-    );
-    holeGroup.add(rim);
-
-    // Glow behind everything
-    const glowMat = new THREE.SpriteMaterial({
-      map: nebulaTexture('#e8b45f'),
-      transparent: true,
-      opacity: 0.75,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-    const glow = new THREE.Sprite(glowMat);
-    glow.scale.set(420, 420, 1);
-    glow.position.z = -30;
-    holeGroup.add(glow);
-
-    // Stars caught in the pull — a slow spiral
-    const SPIRAL_N = 420;
+    // Slow chalky swirl of captured starlight
+    const SPIRAL_N = 260;
     const spPos = new Float32Array(SPIRAL_N * 3);
     const spSize = new Float32Array(SPIRAL_N);
     const spPhase = new Float32Array(SPIRAL_N);
@@ -1043,14 +1976,14 @@ const { posts, range } = Astro.props;
     for (let i = 0; i < SPIRAL_N; i++) {
       const t = spRand();
       const arm = spRand() < 0.5 ? 0 : Math.PI;
-      const theta = arm + t * 4.6 + spRand() * 0.5;
-      const rad = 24 + t * 150;
+      const theta = arm + t * 4.2 + spRand() * 0.5;
+      const rad = 16 + t * 78;
       spPos[i * 3] = Math.cos(theta) * rad;
-      spPos[i * 3 + 1] = Math.sin(theta) * rad * 0.4;
-      spPos[i * 3 + 2] = (spRand() - 0.5) * 22;
-      spSize[i] = 0.6 + spRand() * 1.6;
+      spPos[i * 3 + 1] = Math.sin(theta) * rad * 0.55;
+      spPos[i * 3 + 2] = (spRand() - 0.5) * 10;
+      spSize[i] = 0.5 + spRand() * 1.4;
       spPhase[i] = spRand();
-      spSpeed[i] = 0.5 + spRand() * 1.6;
+      spSpeed[i] = 0.4 + spRand() * 1.2;
     }
     const spGeo = new THREE.BufferGeometry();
     spGeo.setAttribute('position', new THREE.BufferAttribute(spPos, 3));
@@ -1058,10 +1991,10 @@ const { posts, range } = Astro.props;
     spGeo.setAttribute('aPhase', new THREE.BufferAttribute(spPhase, 1));
     spGeo.setAttribute('aSpeed', new THREE.BufferAttribute(spSpeed, 1));
     const spiral = new THREE.Points(spGeo, starMat.clone());
-    spiral.rotation.copy(discPlane.rotation);
     holeGroup.add(spiral);
 
     /* ---------- Camera + interaction state ---------- */
+    const LOOK_AHEAD = 0.015; // fraction of the whole curve the gaze leads the eye
     let progress = 0; // eased
     let mouseX = 0;
     let mouseY = 0;
@@ -1069,11 +2002,13 @@ const { posts, range } = Astro.props;
     let lookY = 0;
     let hovered = -1;
     let focused = -1;
-    let focusT = 0; // 0 = on rail, 1 = at portal
+    let focusT = 0; // 0 = drifting, 1 = at star
     let running = false;
     let flying = false;
     let hintGone = false;
     let ended = false;
+    let lastFocusEl: HTMLElement | null = null;
+    const journeyFired = new Set<string>();
 
     const railPos = new THREE.Vector3();
     const focusPos = new THREE.Vector3();
@@ -1081,8 +2016,8 @@ const { posts, range } = Astro.props;
     const focusQuat = new THREE.Quaternion();
     // Must be a camera: Object3D.lookAt points +Z at the target, cameras view down -Z
     const dummy = new THREE.PerspectiveCamera();
-    const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2(-10, -10);
+    const pickV = new THREE.Vector3();
 
     window.addEventListener(
       'pointermove',
@@ -1095,6 +2030,29 @@ const { posts, range } = Astro.props;
       { passive: true }
     );
 
+    /* Nearest star within a generous screen-space slop, not an exact
+       sprite raycast — pointer parallax slides the world as the hand moves
+       toward a star, so precise hit-testing made small stars nearly
+       impossible to catch. Shared by the hover loop and the click handler
+       (some input paths — touch, fast clicks — never fire pointermove). */
+    function pickStar(camU: number) {
+      let best = -1;
+      let bestD = 48; // CSS px tolerance
+      for (let i = 0; i < encounters.length; i++) {
+        if (Math.abs(camU - encounters[i].u) * D_TOTAL > 420) continue; // only this stretch of the journey
+        pickV.copy(starPos[i]).project(camera);
+        if (pickV.z > 1 || pickV.z < -1) continue; // behind the lens
+        const dx = ((pickV.x - pointer.x) * innerWidth) / 2;
+        const dy = ((pickV.y - pointer.y) * innerHeight) / 2;
+        const d = Math.hypot(dx, dy);
+        if (d < bestD) {
+          bestD = d;
+          best = i;
+        }
+      }
+      return best;
+    }
+
     /* ---------- Audio ---------- */
     let audio: ReturnType<typeof makeAudio> | null = null;
     let muted = false;
@@ -1105,69 +2063,175 @@ const { posts, range } = Astro.props;
       muteBtn.textContent = muted ? 'SOUND OFF' : 'SOUND ON';
     });
 
-    /* ---------- Texture preload, then arm the launch button ---------- */
-    const preload = posts
-      .filter((p) => p.image)
-      .map(
-        (p) =>
-          new Promise<void>((res) => {
-            const img = new Image();
-            img.onload = () => res();
-            img.onerror = () => res();
-            img.src = p.image;
-          })
-      );
-
+    /* ---------- Font preload, then arm the launch button ---------- */
     const dbg: Record<string, boolean> = ((window as any).__saDebug = {
-      images: false,
       fonts: false,
       armed: false,
     });
 
     function armLaunch() {
+      if (dbg.armed) return;
       dbg.armed = true;
       gateLaunch.disabled = false;
       gateLaunch.textContent = 'Launch';
     }
 
-    const imagesReady = Promise.all(preload).then(() => {
-      dbg.images = true;
-    });
-    const fontsReady = Promise.resolve(
-      (document as any).fonts?.ready
-    ).then(() => {
+    Promise.resolve((document as any).fonts?.ready).then(() => {
       dbg.fonts = true;
+      armLaunch();
     });
-
-    Promise.all([imagesReady, fontsReady]).then(armLaunch);
     // Never strand the visitor on a stuck preload
-    setTimeout(() => {
-      if (!dbg.armed) armLaunch();
-    }, 5000);
+    setTimeout(armLaunch, 5000);
 
     /* ---------- Flight mode on/off ---------- */
     const lenis = () => (window as any).__lenis;
 
-    function enterFlight() {
+    function hideGate() {
+      gate.classList.add('leaving');
+      setTimeout(() => {
+        gate.classList.remove('show', 'leaving');
+        gate.setAttribute('aria-hidden', 'true');
+      }, 900);
+    }
+
+    function startScene() {
       flying = true;
       document.body.classList.add('flying');
       flatSection.style.display = 'none';
       track.style.height = `${posts.length * 55 + 280}vh`;
       window.scrollTo(0, 0);
       lenis()?.scrollTo(0, { immediate: true });
-      gate.classList.add('leaving');
-      setTimeout(() => {
-        gate.classList.remove('show', 'leaving');
-        gate.setAttribute('aria-hidden', 'true');
-      }, 900);
       canvas.classList.add('is-on');
       if (!audio) audio = makeAudio();
       audio.ctx.resume();
       audio.setMuted(muted);
+      audio.loadAll();
+      audio.startBeds();
+      journeyFired.clear();
       if (!running) {
         running = true;
-        lastT = tNow();
         requestAnimationFrame(frame);
+      }
+    }
+
+    function calibrate() {
+      hud.classList.add('on');
+      setStatus('Archive awake', 2000);
+      setTimeout(() => setStatus('Field settling', 1800), 2200);
+      setTimeout(() => setStatus(''), 4400);
+    }
+
+    /* ---------- Helmet entry ---------- */
+    const HELMET_SEEN = 'sa-helmet-seen';
+    let helmetDone = false;
+
+    function finishHelmet(skipped: boolean) {
+      if (helmetDone) return;
+      helmetDone = true;
+      try {
+        sessionStorage.setItem(HELMET_SEEN, '1');
+      } catch {}
+      helmet.classList.add('fading');
+      helmetSkip.hidden = true;
+      lenis()?.start();
+      setTimeout(
+        () => {
+          helmet.classList.remove('show', 'fading');
+          helmet.pause();
+        },
+        skipped ? 300 : 1300
+      );
+      calibrate();
+    }
+
+    function runHelmet() {
+      helmetDone = false;
+      helmetSkip.hidden = false;
+      helmet.classList.add('show');
+      lenis()?.stop(); // hold the journey until the visor resolves
+
+      // Sound timeline against the 5s video: hands take hold, helmet lifts,
+      // crosses the camera, seals shut, visor settles, one enclosed breath,
+      // the system wakes as the HUD calibrates.
+      const cueTimeline: Array<[number, string]> = [
+        [0.05, 'hands'],
+        [1.05, 'lift'],
+        [2.2, 'cross'],
+        [2.85, 'seal'],
+        [3.45, 'visor'],
+        [3.95, 'breath'],
+        [4.4, 'wake'],
+      ];
+      let cueIdx = 0;
+      const cueTimer = setInterval(() => {
+        // Video paused = skipped or finished; playback drives the timeline
+        if (helmet.ended || (helmet.paused && helmet.currentTime > 0.1)) {
+          clearInterval(cueTimer);
+          return;
+        }
+        while (cueIdx < cueTimeline.length && helmet.currentTime >= cueTimeline[cueIdx][0]) {
+          audio?.cue(cueTimeline[cueIdx][1]);
+          cueIdx++;
+        }
+      }, 50);
+
+      const onTime = () => {
+        if (helmet.currentTime > 3.9) beginFade();
+      };
+      let fading = false;
+      const beginFade = () => {
+        if (fading) return;
+        fading = true;
+        finishHelmet(false);
+      };
+
+      helmet.addEventListener('timeupdate', onTime);
+      helmet.addEventListener('ended', beginFade, { once: true });
+      helmet.addEventListener('error', () => finishHelmet(true), { once: true });
+
+      helmet.currentTime = 0;
+      const p = helmet.play();
+      p?.catch(() => finishHelmet(true));
+      // Stall guard: never strand the visitor behind a stuck video
+      setTimeout(() => {
+        if (!helmetDone && helmet.currentTime < 0.2) finishHelmet(true);
+      }, 3000);
+    }
+
+    helmetSkip.addEventListener('click', () => finishHelmet(true));
+
+    function enterFlight() {
+      hideGate();
+      startScene();
+      // The helmet goes on every time you enter the archive — putting it
+      // on IS the ritual. The skip button stays for impatient re-entries.
+      runHelmet();
+    }
+
+    let finaleTimer: ReturnType<typeof setTimeout> | null = null;
+    function runFinale() {
+      const showBanner = () => {
+        endCard.classList.add('show');
+        endCard.setAttribute('aria-hidden', 'false');
+      };
+      finale.classList.add('show');
+      finale.currentTime = 0;
+      finale.onended = showBanner;
+      const p = finale.play();
+      p?.catch(showBanner); // autoplay refused: straight to the banner
+      // Stall guard: the banner must never be lost behind a stuck video
+      finaleTimer = setTimeout(() => {
+        if (!endCard.classList.contains('show')) showBanner();
+      }, 8000);
+    }
+
+    function hideFinale() {
+      finale.classList.remove('show');
+      finale.pause();
+      finale.onended = null;
+      if (finaleTimer) {
+        clearTimeout(finaleTimer);
+        finaleTimer = null;
       }
     }
 
@@ -1175,49 +2239,71 @@ const { posts, range } = Astro.props;
       flying = false;
       running = false;
       closeFocus(true);
+      hideFinale();
       document.body.classList.remove('flying');
       canvas.classList.remove('is-on');
+      hud.classList.remove('on');
+      helmet.classList.remove('show', 'fading');
+      helmet.pause();
+      helmetSkip.hidden = true;
       flatSection.style.display = '';
       track.style.height = '0';
       endCard.classList.remove('show');
       ended = false;
       audio?.setMuted(true);
+      audio?.stopBeds();
+      lenis()?.start();
       window.scrollTo(0, 0);
       lenis()?.scrollTo(0, { immediate: true });
     }
 
     gateLaunch.addEventListener('click', enterFlight);
     relaunch.addEventListener('click', enterFlight);
-    gateSkip.addEventListener('click', () => {
-      gate.classList.add('leaving');
-      setTimeout(() => {
-        gate.classList.remove('show', 'leaving');
-        gate.setAttribute('aria-hidden', 'true');
-      }, 900);
-    });
+    gateSkip.addEventListener('click', hideGate);
     exitBtn.addEventListener('click', exitFlight);
     endFlat.addEventListener('click', exitFlight);
     returnLaunch.addEventListener('click', () => {
+      journeyFired.clear(); // the descent can sound again next time down
       lenis()?.scrollTo(0, { duration: 3 });
     });
 
-    /* ---------- Portal focus ---------- */
-    function openFocus(i: number) {
+    /* ---------- Editorial Aperture (selected transmission) ---------- */
+    function openFocus(i: number, viaKeyboard = false) {
       if (focused === i) return;
       focused = i;
       const post = posts[i];
       focusMeta.textContent = `${tagLabel(post.tag)} ✦ ${post.category}`;
-      (focusMeta as HTMLElement).style.color = CATEGORY_COLORS[post.category] || '';
       focusTitle.textContent = post.title;
       focusDate.textContent = post.dateLabel;
       focusDesc.textContent = post.description;
       focusRead.href = `/post/${post.slug}`;
+      if (post.image) {
+        focusImg.src = post.image;
+        focusAperture.hidden = false;
+        focusCard.classList.remove('settled');
+        // Image opens generous, then contracts into a painterly header
+        setTimeout(() => focusCard.classList.add('settled'), 700);
+      } else {
+        focusAperture.hidden = true;
+        focusCard.classList.remove('settled');
+      }
       focusCard.classList.add('show');
       focusCard.setAttribute('aria-hidden', 'false');
+      focusCard.setAttribute('aria-modal', 'true');
+      hud.classList.add('receded');
+      setStatus('Drift paused');
+      lastFocusEl = viaKeyboard ? (document.activeElement as HTMLElement) : null;
+      // preventScroll: focusing the fixed card must not drag the document
+      // scroll (progress is frozen while reading, so a hijacked scroll only
+      // surfaces on dismissal — the camera would suddenly rocket down the
+      // tunnel to wherever the browser had silently scrolled)
+      focusClose.focus({ preventScroll: true });
       lenis()?.stop();
+      audio?.setDuck(true);
+      audio?.cue('select');
       gsap.to({ v: focusT }, {
         v: 1,
-        duration: 1.4,
+        duration: 1.3,
         ease: 'power3.inOut',
         onUpdate() {
           focusT = (this.targets()[0] as any).v;
@@ -1228,8 +2314,17 @@ const { posts, range } = Astro.props;
     function closeFocus(instant = false) {
       if (focused === -1) return;
       focused = -1;
-      focusCard.classList.remove('show');
+      focusCard.classList.remove('show', 'settled');
       focusCard.setAttribute('aria-hidden', 'true');
+      focusCard.setAttribute('aria-modal', 'false');
+      hud.classList.remove('receded');
+      setStatus('');
+      audio?.setDuck(false);
+      if (!instant) audio?.cue('dismiss');
+      if (lastFocusEl) {
+        lastFocusEl.focus({ preventScroll: true });
+        lastFocusEl = null;
+      }
       lenis()?.start();
       if (instant) {
         focusT = 0;
@@ -1237,7 +2332,7 @@ const { posts, range } = Astro.props;
       }
       gsap.to({ v: focusT }, {
         v: 0,
-        duration: 1.1,
+        duration: 1.0,
         ease: 'power3.inOut',
         onUpdate() {
           focusT = (this.targets()[0] as any).v;
@@ -1247,60 +2342,116 @@ const { posts, range } = Astro.props;
 
     focusClose.addEventListener('click', () => closeFocus());
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeFocus();
+      if (e.key === 'Escape') {
+        if (!helmetDone && helmet.classList.contains('show')) {
+          finishHelmet(true);
+        } else {
+          closeFocus();
+        }
+      }
+      // Keep focus inside the dialog while it is open
+      if (e.key === 'Tab' && focused !== -1) {
+        const focusables = [focusClose, focusRead];
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     });
 
-    canvas.addEventListener('click', () => {
+    canvas.addEventListener('click', (e) => {
       if (!flying) return;
       if (focused !== -1) {
         closeFocus();
         return;
       }
-      if (hovered >= 0) {
-        audio?.chime();
-        openFocus(hovered);
-      }
+      // Pick from the click itself rather than trusting a prior hover
+      pointer.x = (e.clientX / innerWidth) * 2 - 1;
+      pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+      const i = hovered >= 0 ? hovered : pickStar(Math.max(0, Math.min(1, progress)));
+      if (i >= 0) openFocus(i);
+    });
+
+    // Keyboard path: the star index opens any transmission
+    starIndex.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.star-index-btn') as HTMLElement | null;
+      if (!btn) return;
+      const i = Number(btn.dataset.index);
+      if (!Number.isNaN(i)) openFocus(i, true);
     });
 
     /* ---------- HUD ---------- */
-    function updateHud(camZ: number, p: number) {
+    function updateHud(camU: number, p: number) {
       hudGaugeFill.style.height = `${Math.round(p * 100)}%`;
+      if (focused !== -1) return; // "Drift paused" owns the readout
       let nearest = -1;
       let best = Infinity;
-      for (let i = 0; i < portalPos.length; i++) {
-        const d = Math.abs(camZ - portalPos[i].z);
+      for (let i = 0; i < encounters.length; i++) {
+        const d = Math.abs(camU - encounters[i].u) * D_TOTAL;
         if (d < best) {
           best = d;
           nearest = i;
         }
       }
-      if (nearest >= 0 && best < 220) {
+      if (p > 0.96) {
+        setStatus('Event horizon');
+        hudSector.textContent = '';
+      } else if (p > 0.88) {
+        setStatus('Approaching the oldest surviving signal');
+        hudSector.textContent = '';
+      } else if (p > 0.78) {
+        setStatus('Light is beginning to bend');
+        hudSector.textContent = '';
+      } else if (nearest >= 0 && best < 90) {
+        setStatus('Memory held in range', 1200);
         const post = posts[nearest];
-        hudSector.textContent = `TRANSMISSION ${String(nearest + 1).padStart(2, '0')}/${posts.length} · SECTOR ${post.year}`;
-      } else if (camZ < zHole + 400) {
-        hudSector.textContent = 'APPROACHING EVENT HORIZON';
+        hudSector.textContent = `TRANSMISSION ${String(nearest + 1).padStart(2, '0')} / ${posts.length} · SECTOR ${post.year}`;
+      } else if (nearest >= 0 && best < 150) {
+        setStatus('A signal is resolving', 1200);
       } else {
-        hudSector.textContent = 'DEEP SPACE';
+        setStatus('', 1000);
+        hudSector.textContent = '';
       }
     }
 
     /* ---------- Frame loop ---------- */
     const t0 = performance.now();
     const tNow = () => (performance.now() - t0) / 1000;
-    let lastT = 0;
     let hudTick = 0;
+
+    // Journey sound moments, once per flight (reset on enterFlight)
+    const journeyCues: Array<[number, string]> = [
+      [0.78, 'gravity'],
+      [0.88, 'funnel'],
+      [0.93, 'starlight'],
+      [0.962, 'approach'],
+      [0.985, 'arrival'],
+    ];
+
+    function fireJourneyCues(p: number) {
+      for (const [at, name] of journeyCues) {
+        if (p >= at && !journeyFired.has(name)) {
+          journeyFired.add(name);
+          audio?.cue(name);
+        }
+      }
+    }
 
     function frame() {
       if (!running) return;
       const t = tNow();
-      lastT = t;
 
       // Scroll → progress (Lenis already smooths the scroll itself).
-      // Frozen while a portal is in focus so nothing can yank the camera mid-read.
+      // Frozen while a star is in focus so nothing can yank the camera mid-read.
       if (focused === -1) {
         const scrollable = Math.max(1, document.documentElement.scrollHeight - innerHeight);
         const target = Math.min(1, Math.max(0, scrollY / scrollable));
-        progress += (target - progress) * 0.07;
+        progress += (target - progress) * 0.06;
       }
 
       if (!hintGone && scrollY > 60) {
@@ -1308,32 +2459,62 @@ const { posts, range } = Astro.props;
         hudHint.classList.add('gone');
       }
 
-      const camZ = Z_START + (Z_END - Z_START) * progress;
+      // Scroll progress maps straight onto the curve's own arc-length u.
+      const camU = Math.max(0, Math.min(1, progress));
+      const sinkEase = smoothstep(0.8, 0.99, camU); // how deep into the descent we are
 
-      // Rail pose — mouse-look eased so portals don't dodge the cursor
+      const center = pathCurve.getPointAt(camU);
+      const { normal, binormal } = frameAt(camU);
+      // Look slightly ahead along the curve. Past u = 1 there's nothing left
+      // to sample, so extrapolate along the final tangent instead of
+      // clamping — clamping would let the look-ahead point collapse onto
+      // the camera right at the horizon and hand lookAt a zero-length
+      // direction.
+      const lookU = camU + LOOK_AHEAD;
+      const lookCenter =
+        lookU <= 1
+          ? pathCurve.getPointAt(lookU)
+          : pathCurve
+              .getPointAt(1)
+              .clone()
+              .addScaledVector(frameAt(1).tangent, (lookU - 1) * D_TOTAL);
+
+      // Rail pose: camera position + look-target both ride the authored
+      // curve; the camera "up" is the curve's own Frenet normal, so as it
+      // spins around the tangent through the corkscrew the camera rolls
+      // with it automatically — no separate roll bookkeeping needed.
+      // Pointer parallax is a small LOCAL offset along the tunnel's own
+      // right/up axes (binormal/normal), never a free-fly translation.
       lookX += (mouseX - lookX) * 0.06;
       lookY += (mouseY - lookY) * 0.06;
-      railPos.set(pathX(camZ), pathY(camZ), camZ);
-      const lookAhead = camZ - 90;
+      const breathe = Math.sin(t * 0.4) * 1.6;
+      const parallax = 6 + sinkEase * 2;
+
+      railPos
+        .copy(center)
+        .addScaledVector(binormal, lookX * parallax)
+        .addScaledVector(normal, lookY * parallax * 0.7 + breathe * 0.4);
       dummy.position.copy(railPos);
-      dummy.lookAt(
-        pathX(lookAhead) + lookX * 26,
-        pathY(lookAhead) + lookY * 16,
-        lookAhead
-      );
+      dummy.up.copy(normal);
+      const lookTarget = lookCenter
+        .clone()
+        .addScaledVector(binormal, lookX * parallax * 1.6)
+        .addScaledVector(normal, lookY * parallax * 1.1);
+      dummy.lookAt(lookTarget);
       railQuat.copy(dummy.quaternion);
 
-      // Focus pose (blend toward the focused portal)
+      // Focus pose: pull back off the wall along the post's own radial
+      // spoke, back toward the axis, then look at the star.
       if (focused !== -1 || focusT > 0.001) {
         const i = focused !== -1 ? focused : Math.max(0, hovered);
-        const pp = portalPos[Math.min(i, portalPos.length - 1)];
-        const back = new THREE.Vector3(pathX(pp.z + 90) - pp.x, 0, 90).normalize();
-        focusPos.copy(pp).addScaledVector(back, 42);
-        focusPos.y = pp.y + 1;
-        // Shift left so the DOM card on the right doesn't cover the portal
-        focusPos.x += back.z * 0 - 6;
+        const enc = encounters[Math.min(i, encounters.length - 1)];
+        const sp = starPos[Math.min(i, starPos.length - 1)];
+        // Stay near the axis: parking closer to the wall put the camera
+        // almost inside the star sprite, which then filled the frame
+        focusPos.copy(enc.center).addScaledVector(enc.outward, tubeRadius(enc.u) * 0.08);
         dummy.position.copy(focusPos);
-        dummy.lookAt(pp);
+        dummy.up.copy(frameAt(enc.u).normal);
+        dummy.lookAt(sp);
         focusQuat.copy(dummy.quaternion);
         camera.position.lerpVectors(railPos, focusPos, focusT);
         camera.quaternion.slerpQuaternions(railQuat, focusQuat, focusT);
@@ -1342,63 +2523,157 @@ const { posts, range } = Astro.props;
         camera.quaternion.copy(railQuat);
       }
 
-      // Uniforms
+      // Uniforms + ambient motion
       starMat.uniforms.uTime.value = t;
+      midDustMat.uniforms.uTime.value = t;
+      nearDustMat.uniforms.uTime.value = t;
       (spiral.material as THREE.ShaderMaterial).uniforms.uTime.value = t;
-      (discPlane.material as THREE.ShaderMaterial).uniforms.uTime.value = t;
-      (rim.material as THREE.ShaderMaterial).uniforms.uTime.value = t;
-      core.quaternion.copy(camera.quaternion);
-      rim.quaternion.copy(camera.quaternion);
-      spiral.rotation.z = t * 0.05;
+      spiral.rotation.z = t * 0.04;
+      // The black hole turns slowly against the swirl as you close in
+      if (holeSprite) (holeSprite.material as THREE.SpriteMaterial).rotation = -t * 0.06;
+      auroras.forEach((a, i) => {
+        a.position.y = auroraBaseY[i] + Math.sin(t * 0.05 + i * 1.7) * 4;
+        const mat = a.material as THREE.SpriteMaterial;
+        mat.opacity = (0.24 + 0.07 * Math.sin(t * 0.08 + i * 2.1)) * (1 - sinkEase * 0.45);
+        mat.rotation = -sinkEase * 0.35;
+      });
+      yearMeshes.forEach((s) => {
+        // Gone entirely while a card is open — the aperture is enough
+        (s.material as THREE.MeshBasicMaterial).opacity =
+          0.1 * (1 - sinkEase * 0.8) * (1 - focusT);
+      });
+      // Foreground detail falls away near arrival
+      threadMat.opacity = 0.14 * (1 - sinkEase);
+      goldMat.opacity = 0.55 * (1 - sinkEase * 0.6);
+      audio?.setDescent(sinkEase);
 
-      // Hover raycast (only while on the rail)
+      // The gold light-line draws itself as you travel
+      const goldN = Math.floor(camU * goldTotal);
+      goldLine.geometry.setDrawRange(0, Math.max(0, Math.min(goldTotal, goldN)));
+
+      /* Proximity encounters: continuous interpolation between
+         far star → image fragment → dissolved title, now measured as
+         arc-length distance ALONG THE PATH rather than lateral distance —
+         "in range" means near along the journey, matching how the tunnel
+         is actually travelled. Only the nearest two encounters may show a
+         card at once. */
+      let n1 = -1;
+      let n2 = -1;
+      let d1 = Infinity;
+      let d2 = Infinity;
+      for (let i = 0; i < encounters.length; i++) {
+        const d = Math.abs(camU - encounters[i].u) * D_TOTAL;
+        if (d < d1) {
+          d2 = d1;
+          n2 = n1;
+          d1 = d;
+          n1 = i;
+        } else if (d < d2) {
+          d2 = d;
+          n2 = i;
+        }
+      }
+
+      for (let i = 0; i < encounters.length; i++) {
+        const enc = encounters[i];
+        const d = Math.abs(camU - enc.u) * D_TOTAL;
+        const isNear = i === n1 || i === n2;
+
+        // Lazy-create the image card as the camera first approaches
+        if (isNear && d < 300 && !enc.imageRequested && enc.star.userData.makeCard) {
+          enc.imageRequested = true;
+          enc.star.userData.makeCard();
+        }
+
+        // Target states from distance (world units)
+        let revealT = 0;
+        let dissolveT = 0;
+        let titleT = 0;
+        if (isNear && (flying || focused === i)) {
+          revealT = 1 - Math.min(1, Math.max(0, (d - 55) / 90)); // materialise 145 → 55
+          dissolveT = 1 - Math.min(1, Math.max(0, (d - 26) / 42)); // dissolve 68 → 26
+          titleT = 1 - Math.min(1, Math.max(0, (d - 20) / 34)); // title resolves 54 → 20
+          if (focused === i) {
+            revealT = 1;
+            dissolveT = 1;
+            titleT = 1;
+          }
+        }
+
+        enc.reveal += (revealT - enc.reveal) * 0.07;
+        enc.dissolve += (dissolveT - enc.dissolve) * 0.07;
+        enc.titleA += (titleT - enc.titleA) * 0.08;
+
+        if (enc.cardMat) {
+          enc.cardMat.uniforms.uReveal.value = enc.reveal;
+          enc.cardMat.uniforms.uDissolve.value = enc.dissolve;
+          if (enc.cardMesh) enc.cardMesh.visible = enc.reveal > 0.015;
+        }
+        // No image: the title alone resolves out of the dark at near range
+        enc.titleMat.opacity = enc.titleA * 0.92;
+        enc.titleMesh.visible = enc.titleA > 0.015;
+
+        // Sound moments, once per pass: a barely-there optical settle as the
+        // memory materialises, ice-pigment as it dissolves, a soft servo as
+        // the title resolves
+        if (enc.reveal > 0.5 && !enc.chimed) {
+          enc.chimed = true;
+          audio?.cue('resolve', 0.07);
+        } else if (enc.reveal < 0.1 && enc.chimed) {
+          enc.chimed = false;
+        }
+        if (enc.dissolve > 0.4 && !enc.announced) {
+          enc.announced = true;
+          audio?.cue('dissolve');
+        } else if (enc.dissolve < 0.1 && enc.announced) {
+          enc.announced = false;
+        }
+        if (enc.titleA > 0.65 && !enc.resolved) {
+          enc.resolved = true;
+          audio?.cue('resolve');
+        } else if (enc.titleA < 0.1 && enc.resolved) {
+          enc.resolved = false;
+        }
+
+        // Star warms and grows slightly as its card materialises — no ring
+        // Focused stars settle rather than flare — the aperture card holds
+        // the reader's attention; the star just marks the place
+        const want = (i === focused ? 0.15 : i === hovered ? 1 : 0) + enc.reveal * 0.4;
+        starBoost[i] += (want - starBoost[i]) * 0.1;
+        const shimmer = 1 + 0.05 * Math.sin(t * 1.3 + i * 2.3);
+        const sc = enc.baseScale * shimmer * (1 + starBoost[i] * 0.3);
+        enc.star.scale.set(sc, sc, 1);
+        (enc.star.material as THREE.SpriteMaterial).opacity =
+          0.82 + 0.1 * Math.sin(t * 1.1 + i * 1.7) + starBoost[i] * 0.15;
+      }
+
+      // Hover pick (only while drifting)
       let hit = -1;
       if (focused === -1 && focusT < 0.05) {
-        raycaster.setFromCamera(pointer, camera);
-        const hits = raycaster.intersectObjects(discMeshes, false);
-        if (hits.length) hit = hits[0].object.userData.index;
+        hit = pickStar(camU);
       }
       if (hit !== hovered) {
         hovered = hit;
         document.body.style.cursor = hit >= 0 ? 'pointer' : '';
       }
-      ringMats.forEach((m, i) => {
-        m.uniforms.uTime.value = t;
-        const want = i === hovered || i === focused ? 1 : 0;
-        m.uniforms.uBoost.value += (want - m.uniforms.uBoost.value) * 0.1;
-      });
-      discMeshes.forEach((d, i) => {
-        const mat = d.material as THREE.MeshBasicMaterial;
-        if (mat.map) {
-          const bright = i === hovered || i === focused ? 0xffffff : 0xbdbdbd;
-          mat.color.setHex(bright);
-        }
-      });
 
-      // Proximity chime
-      for (let i = 0; i < portalPos.length; i++) {
-        const d = Math.abs(camZ - portalPos[i].z);
-        if (d < 70 && !chimed[i]) {
-          chimed[i] = true;
-          audio?.chime();
-        } else if (d > 160 && chimed[i]) {
-          chimed[i] = false;
-        }
-      }
-
-      // End card
+      // Event horizon: the finale film swallows the view, then the end
+      // card rises over its last frame
+      if (camU > 0.85 && finale.preload !== 'auto') finale.preload = 'auto';
       if (progress > 0.985 && !ended) {
         ended = true;
-        endCard.classList.add('show');
-        endCard.setAttribute('aria-hidden', 'false');
+        runFinale();
       } else if (progress < 0.96 && ended) {
         ended = false;
+        hideFinale();
         endCard.classList.remove('show');
         endCard.setAttribute('aria-hidden', 'true');
       }
 
+      fireJourneyCues(progress);
+
       // HUD every few frames
-      if (++hudTick % 8 === 0) updateHud(camZ, progress);
+      if (++hudTick % 8 === 0) updateHud(camU, progress);
 
       renderer.render(scene, camera);
       requestAnimationFrame(frame);
@@ -1410,7 +2685,6 @@ const { posts, range } = Astro.props;
         running = false;
       } else if (flying && !running) {
         running = true;
-        lastT = tNow();
         requestAnimationFrame(frame);
       }
     });
@@ -1423,7 +2697,17 @@ const { posts, range } = Astro.props;
     });
 
     // Dev introspection hook (harmless in production)
-    (window as any).__sa = { scene, camera, renderer, portalPos, discMeshes };
+    (window as any).__sa = {
+      scene,
+      camera,
+      renderer,
+      starPos,
+      starSprites,
+      encounters,
+      postU,
+      pathCurve,
+      tunnelMesh,
+    };
   }
 
   // Called last so every const above is initialised before init touches it.

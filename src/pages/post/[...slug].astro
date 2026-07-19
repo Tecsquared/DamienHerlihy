@@ -5,13 +5,23 @@ import RelatedPosts from '../../components/RelatedPosts.astro';
 
 export async function getStaticPaths() {
   const posts = await getCollection('posts');
+
+  // The three most recent Star (Note) posts carry the menu-star emblem in the header.
+  const recentStarSlugs = new Set(
+    posts
+      .filter((p) => p.data.tag.startsWith('Star'))
+      .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+      .slice(0, 3)
+      .map((p) => p.id),
+  );
+
   return posts.map((post) => ({
     params: { slug: post.id },
-    props: { post },
+    props: { post, showStarEmblem: recentStarSlugs.has(post.id) },
   }));
 }
 
-const { post } = Astro.props;
+const { post, showStarEmblem } = Astro.props;
 const { Content } = await render(post);
 
 const dateStr = post.data.date
@@ -72,6 +82,14 @@ const postSchema = {
         </svg>
         Back to the universe
       </a>
+
+      {
+        showStarEmblem && (
+          <figure class="post-emblem" data-reveal aria-hidden="true">
+            <img src="/images/menu-star.png" alt="" width="88" height="88" loading="eager" />
+          </figure>
+        )
+      }
 
       <div class="post-meta" data-reveal data-reveal-delay="0.06">
         <span class="post-pill post-pill-gold">{tagLabel(post.data.tag)}</span>
@@ -164,6 +182,25 @@ const postSchema = {
 
   .post-back:hover svg {
     transform: translateX(-4px);
+  }
+
+  .post-emblem {
+    margin: 0;
+    width: 88px;
+    height: 88px;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    background: var(--bg-deep);
+    box-shadow: 0 12px 40px -18px rgba(217, 169, 79, 0.5);
+  }
+
+  .post-emblem img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
   }
 
   .post-meta {
