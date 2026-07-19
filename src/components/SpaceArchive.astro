@@ -17,8 +17,9 @@
   plane (Memory Dissolve). Clicking opens the Editorial Aperture card — a
   stable DOM dialog where the image contracts into a painterly header.
 
-  Desktop + fine-motion only: phones and prefers-reduced-motion visitors
-  stay on the flat list rendered by archive.astro. No JS = flat list.
+  Works with mouse (hover + parallax look) and touch (tap to inspect,
+  swipe to drift, steady gaze). prefers-reduced-motion visitors stay on
+  the flat list rendered by archive.astro. No JS = flat list.
 */
 interface FlightPost {
   title: string;
@@ -251,7 +252,7 @@ function tagLabel(tag: string) {
   .helmet-skip {
     position: fixed;
     right: 28px;
-    bottom: 26px;
+    bottom: calc(26px + env(safe-area-inset-bottom, 0px));
     z-index: 610;
     background: rgba(10, 10, 22, 0.55);
     backdrop-filter: blur(10px);
@@ -348,7 +349,7 @@ function tagLabel(tag: string) {
 
   .gate-hint {
     position: absolute;
-    bottom: 34px;
+    bottom: calc(34px + env(safe-area-inset-bottom, 0px));
     font-family: var(--font-mono);
     font-size: 10px;
     letter-spacing: 0.2em;
@@ -514,7 +515,7 @@ function tagLabel(tag: string) {
 
   .hud-hint {
     position: absolute;
-    bottom: 30px;
+    bottom: calc(30px + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%);
     font-family: var(--font-mono);
@@ -531,7 +532,7 @@ function tagLabel(tag: string) {
   .hud-controls {
     position: absolute;
     right: clamp(20px, 3vw, 40px);
-    bottom: 26px;
+    bottom: calc(26px + env(safe-area-inset-bottom, 0px));
     display: flex;
     gap: 10px;
     pointer-events: auto;
@@ -794,6 +795,31 @@ function tagLabel(tag: string) {
     gap: 10px;
   }
 
+  /* Small screens: the aperture card spans the width; the HUD tightens up */
+  @media (max-width: 640px) {
+    .focus-card {
+      left: 6vw;
+      right: 6vw;
+      width: auto;
+    }
+
+    .focus-body {
+      padding: 20px 22px 24px;
+    }
+
+    .hud-readout {
+      top: 84px;
+    }
+
+    .hud-gauge {
+      height: 24vh;
+    }
+
+    .hud-gauge-label {
+      font-size: 8px;
+    }
+  }
+
   /* Hide footer while drifting; the void needs no footer */
   :global(body.flying footer) {
     display: none;
@@ -827,7 +853,7 @@ function tagLabel(tag: string) {
   );
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const bigScreen = window.matchMedia('(min-width: 900px)').matches;
+  const finePointer = window.matchMedia('(pointer: fine)').matches;
 
   const canvas = document.getElementById('flight-canvas') as HTMLCanvasElement;
   const gate = document.getElementById('gate')!;
@@ -870,7 +896,7 @@ function tagLabel(tag: string) {
     }
   }
 
-  const eligible = !reducedMotion && bigScreen && posts.length > 0 && webglOk();
+  const eligible = !reducedMotion && posts.length > 0 && webglOk();
 
   function tagLabel(tag: string) {
     if (tag.startsWith('Galaxy')) return 'Essay';
@@ -1101,7 +1127,13 @@ function tagLabel(tag: string) {
     gate.classList.add('show');
     gate.setAttribute('aria-hidden', 'false');
     invite.hidden = false;
-    helmet.preload = 'auto'; // only eligible desktops pay for the video
+    helmet.preload = 'auto'; // only eligible visitors pay for the video
+
+    if (!finePointer) {
+      hudHint.textContent = 'SWIPE TO DRIFT';
+      const gateHint = document.querySelector('.gate-hint');
+      if (gateHint) gateHint.textContent = 'SWIPE TO DRIFT · TAP A STAR TO INSPECT';
+    }
 
     let renderer: THREE.WebGLRenderer;
     try {
@@ -1112,7 +1144,7 @@ function tagLabel(tag: string) {
       return;
     }
 
-    const dprCap = 2;
+    const dprCap = innerWidth < 768 ? 1.75 : 2;
     renderer.setPixelRatio(Math.min(devicePixelRatio, dprCap));
     renderer.setSize(innerWidth, innerHeight);
     renderer.setClearColor(0x0e0e1e, 1);
@@ -1120,7 +1152,10 @@ function tagLabel(tag: string) {
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x0e0e1e, 0.0022);
 
-    const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 1200);
+    // Portrait screens see a narrow slice of the tunnel — widen the view so
+    // the wall-mounted stars and cards still enter the frame.
+    const fovFor = () => (innerHeight > innerWidth ? 70 : 55);
+    const camera = new THREE.PerspectiveCamera(fovFor(), innerWidth / innerHeight, 0.1, 1200);
 
     /* ---------- Journey geometry: a corkscrewing tunnel curve ----------
        Pacing still breathes: Essays/Galaxies claim more room around them,
@@ -2002,6 +2037,7 @@ function tagLabel(tag: string) {
     let lookY = 0;
     let hovered = -1;
     let focused = -1;
+    let lastFocused = 0; // keeps the close animation aimed at the right star
     let focusT = 0; // 0 = drifting, 1 = at star
     let running = false;
     let flying = false;
@@ -2019,16 +2055,20 @@ function tagLabel(tag: string) {
     const pointer = new THREE.Vector2(-10, -10);
     const pickV = new THREE.Vector3();
 
-    window.addEventListener(
-      'pointermove',
-      (e) => {
-        pointer.x = (e.clientX / innerWidth) * 2 - 1;
-        pointer.y = -(e.clientY / innerHeight) * 2 + 1;
-        mouseX = pointer.x;
-        mouseY = pointer.y;
-      },
-      { passive: true }
-    );
+    // Fine pointers only: on touch, drag-scrolling would otherwise yank the
+    // parallax look around. Touch keeps a steady gaze and taps to inspect.
+    if (finePointer) {
+      window.addEventListener(
+        'pointermove',
+        (e) => {
+          pointer.x = (e.clientX / innerWidth) * 2 - 1;
+          pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+          mouseX = pointer.x;
+          mouseY = pointer.y;
+        },
+        { passive: true }
+      );
+    }
 
     /* Nearest star within a generous screen-space slop, not an exact
        sprite raycast — pointer parallax slides the world as the hand moves
@@ -2037,7 +2077,7 @@ function tagLabel(tag: string) {
        (some input paths — touch, fast clicks — never fire pointermove). */
     function pickStar(camU: number) {
       let best = -1;
-      let bestD = 48; // CSS px tolerance
+      let bestD = finePointer ? 48 : 60; // CSS px tolerance; fingers are blunter
       for (let i = 0; i < encounters.length; i++) {
         if (Math.abs(camU - encounters[i].u) * D_TOTAL > 420) continue; // only this stretch of the journey
         pickV.copy(starPos[i]).project(camera);
@@ -2271,6 +2311,7 @@ function tagLabel(tag: string) {
     function openFocus(i: number, viaKeyboard = false) {
       if (focused === i) return;
       focused = i;
+      lastFocused = i;
       const post = posts[i];
       focusMeta.textContent = `${tagLabel(post.tag)} ✦ ${post.category}`;
       focusTitle.textContent = post.title;
@@ -2370,10 +2411,14 @@ function tagLabel(tag: string) {
         closeFocus();
         return;
       }
-      // Pick from the click itself rather than trusting a prior hover
+      // Pick from the click itself rather than trusting a prior hover.
+      // On touch there IS no live hover — always trust the tap, then park
+      // the pointer off-screen so the frame loop can't chase a stale spot.
       pointer.x = (e.clientX / innerWidth) * 2 - 1;
       pointer.y = -(e.clientY / innerHeight) * 2 + 1;
-      const i = hovered >= 0 ? hovered : pickStar(Math.max(0, Math.min(1, progress)));
+      const picked = pickStar(Math.max(0, Math.min(1, progress)));
+      const i = finePointer && hovered >= 0 ? hovered : picked;
+      if (!finePointer) pointer.set(-10, -10);
       if (i >= 0) openFocus(i);
     });
 
@@ -2506,7 +2551,7 @@ function tagLabel(tag: string) {
       // Focus pose: pull back off the wall along the post's own radial
       // spoke, back toward the axis, then look at the star.
       if (focused !== -1 || focusT > 0.001) {
-        const i = focused !== -1 ? focused : Math.max(0, hovered);
+        const i = focused !== -1 ? focused : lastFocused;
         const enc = encounters[Math.min(i, encounters.length - 1)];
         const sp = starPos[Math.min(i, starPos.length - 1)];
         // Stay near the axis: parking closer to the wall put the camera
@@ -2691,6 +2736,7 @@ function tagLabel(tag: string) {
 
     window.addEventListener('resize', () => {
       camera.aspect = innerWidth / innerHeight;
+      camera.fov = fovFor();
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
       renderer.setPixelRatio(Math.min(devicePixelRatio, dprCap));
