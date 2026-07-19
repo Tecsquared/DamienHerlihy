@@ -99,7 +99,6 @@ const { posts } = Astro.props;
   );
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const finePointer = window.matchMedia('(pointer: fine)').matches;
 
   function tagLabel(tag: string) {
     if (tag.startsWith('Galaxy')) return 'Essay';
@@ -340,8 +339,7 @@ const { posts } = Astro.props;
 
     /* ---------- Interaction ---------- */
     const raycaster = new THREE.Raycaster();
-    // Fingers are blunter than cursors — widen the hit area on touch.
-    raycaster.params.Points.threshold = finePointer ? 4 : 7;
+    raycaster.params.Points.threshold = 4;
     const pointer = new THREE.Vector2(-10, -10);
     let pointerPx = { x: 0, y: 0 };
     let hovered = -1;
@@ -376,9 +374,7 @@ const { posts } = Astro.props;
       });
       if (i >= 0) {
         tipTitle.textContent = posts[i].title;
-        tipMeta.textContent =
-          `${tagLabel(posts[i].tag)} ✦ ${posts[i].category}` +
-          (finePointer ? '' : ' · tap again to open');
+        tipMeta.textContent = `${tagLabel(posts[i].tag)} ✦ ${posts[i].category}`;
         tip.classList.add('show');
         document.body.style.cursor = 'pointer';
       } else {
@@ -387,55 +383,11 @@ const { posts } = Astro.props;
       }
     }
 
-    // Pick the star nearest the cursor (smallest distanceToRay), not the
-    // one nearest the camera — otherwise stars that cluster in the same
-    // constellation shadow each other and share one tooltip.
-    function pickStar() {
-      raycaster.setFromCamera(pointer, camera);
-      const hits = raycaster.intersectObject(postStars);
-      let pick = -1;
-      let bestRayDist = Infinity;
-      for (const h of hits) {
-        const d = h.distanceToRay ?? Infinity;
-        if (d < bestRayDist) {
-          bestRayDist = d;
-          pick = h.index ?? -1;
-        }
-      }
-      return pick;
-    }
-
     window.addEventListener('click', (e) => {
       if (!heroActive()) return;
       const el = e.target as HTMLElement;
       if (el.closest('a, button, input, textarea, [data-block-stars]')) return;
-
-      if (finePointer) {
-        if (hovered >= 0) location.href = `/post/${posts[hovered].slug}`;
-        return;
-      }
-
-      // Touch: first tap selects a star and shows the tooltip; a second tap
-      // on the same star opens it. Tapping empty sky dismisses.
-      pointer.x = (e.clientX / innerWidth) * 2 - 1;
-      pointer.y = -(e.clientY / innerHeight) * 2 + 1;
-      const pick = pickStar();
-      if (pick >= 0 && pick === hovered) {
-        location.href = `/post/${posts[pick].slug}`;
-        return;
-      }
-      setHover(pick);
-      if (pick >= 0) {
-        tip.style.left = `${Math.min(e.clientX + 18, innerWidth - 320)}px`;
-        tip.style.top = `${Math.min(e.clientY + 18, innerHeight - 96)}px`;
-      }
-      if (reducedMotion) {
-        // No frame loop under reduced motion — apply the swell and repaint once.
-        const attr = postGeo.getAttribute('aScale') as THREE.BufferAttribute;
-        for (let i = 0; i < posts.length; i++) attr.setX(i, targetScales[i]);
-        attr.needsUpdate = true;
-        renderer.render(scene, camera);
-      }
+      if (hovered >= 0) location.href = `/post/${posts[hovered].slug}`;
     });
 
     /* ---------- Scroll response ---------- */
@@ -521,15 +473,28 @@ const { posts } = Astro.props;
         }
       }
 
-      // Raycast hover (hero only, fine pointers only — touch selects via tap)
-      if (heroActive() && finePointer) {
-        setHover(pickStar());
+      // Raycast hover (hero only, fine pointers only)
+      if (heroActive() && matchMedia('(pointer: fine)').matches) {
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObject(postStars);
+        // Pick the star nearest the cursor (smallest distanceToRay), not the
+        // one nearest the camera — otherwise stars that cluster in the same
+        // constellation shadow each other and share one tooltip.
+        let pick = -1;
+        let bestRayDist = Infinity;
+        for (const h of hits) {
+          const d = h.distanceToRay ?? Infinity;
+          if (d < bestRayDist) {
+            bestRayDist = d;
+            pick = h.index ?? -1;
+          }
+        }
+        setHover(pick);
         if (hovered >= 0) {
           tip.style.left = `${Math.min(pointerPx.x + 18, innerWidth - 320)}px`;
           tip.style.top = `${pointerPx.y + 18}px`;
         }
-      } else if (hovered !== -1 && (finePointer || !heroActive())) {
-        // Touch selections persist until a tap elsewhere or a scroll away.
+      } else if (hovered !== -1) {
         setHover(-1);
       }
 
