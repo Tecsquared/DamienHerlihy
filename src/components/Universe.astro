@@ -222,17 +222,18 @@ const { posts } = Astro.props;
     const shortLandscape = innerHeight < 520 && innerWidth > innerHeight;
 
     // Loose cluster anchors. Desktop: across the upper sky (hero text sits
-    // lower-left). Portrait phones: the band below the CTA buttons, beside
-    // the legend caption. Short landscape: the same upper sky, raised a
-    // little clear of the bottom-anchored title.
+    // lower-left). Portrait phones: a ribbon of sky UNDER the "every gold
+    // star is a post" legend — below all the copy, like a page break.
+    // Short landscape: the same upper sky, raised a little clear of the
+    // bottom-anchored title.
     const anchors = portraitPhone
       ? [
-          { fx: -0.55, fy: -0.3 },
-          { fx: 0.1, fy: -0.44 },
-          { fx: 0.58, fy: -0.3 },
-          { fx: -0.2, fy: -0.62 },
-          { fx: 0.5, fy: -0.64 },
-          { fx: -0.6, fy: -0.5 },
+          { fx: -0.6, fy: -0.74 },
+          { fx: -0.1, fy: -0.81 },
+          { fx: 0.45, fy: -0.73 },
+          { fx: -0.35, fy: -0.88 },
+          { fx: 0.6, fy: -0.86 },
+          { fx: 0.15, fy: -0.9 },
         ].map((a) => ({ x: a.fx * halfW, y: a.fy * halfH }))
       : [
           { x: -52, y: 30 },
@@ -260,9 +261,10 @@ const { posts } = Astro.props;
       const anchor = anchors[ci];
       const r = hash(post.slug);
       // Portrait anchors are already viewport-fraction based — squeezing
-      // them again would collapse the clusters into a single column.
+      // them again would collapse the clusters into a single column. The
+      // ribbon under the legend is shallow, so vertical jitter stays tight.
       const jx = portraitPhone ? 0.24 * halfW : 26;
-      const jy = portraitPhone ? 0.11 * halfH : 20;
+      const jy = portraitPhone ? 0.05 * halfH : 20;
       const x = (anchor.x + (r() - 0.5) * jx) * (portraitPhone ? 1 : squeeze);
       const y = anchor.y + (r() - 0.5) * jy;
       const z = (r() - 0.5) * 16;
