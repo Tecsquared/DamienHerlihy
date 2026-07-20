@@ -795,6 +795,62 @@ function tagLabel(tag: string) {
     gap: 10px;
   }
 
+  /* Short viewports (landscape phones): the HUD hugs the edges and the
+     visor curtains slim right down — at this size they read as blackness,
+     not helmet glass */
+  @media (max-height: 520px) {
+    .hud-readout {
+      top: 64px;
+    }
+
+    .hud-gauge {
+      height: 20vh;
+    }
+
+    .visor-edge {
+      width: 9vw;
+    }
+
+    .visor-edge-l {
+      left: -6vw;
+    }
+
+    .visor-edge-r {
+      right: -6vw;
+    }
+
+    .visor-vignette {
+      background: radial-gradient(
+        ellipse 104% 100% at 50% 50%,
+        transparent 68%,
+        rgba(6, 6, 14, 0.5) 100%
+      );
+    }
+  }
+
+  /* Narrow screens: the same slimming for the curtains */
+  @media (max-width: 640px) {
+    .visor-edge {
+      width: 10vw;
+    }
+
+    .visor-edge-l {
+      left: -6vw;
+    }
+
+    .visor-edge-r {
+      right: -6vw;
+    }
+
+    .visor-vignette {
+      background: radial-gradient(
+        ellipse 104% 100% at 50% 50%,
+        transparent 68%,
+        rgba(6, 6, 14, 0.5) 100%
+      );
+    }
+  }
+
   /* Small screens: the aperture card spans the width; the HUD tightens up */
   @media (max-width: 640px) {
     .focus-card {
@@ -1170,7 +1226,9 @@ function tagLabel(tag: string) {
       return tt * tt * (3 - 2 * tt);
     }
 
-    const D_FIRST = 240;
+    // Touch gets a shorter dark runway before the first star: what's two
+    // wheel-flicks on desktop is a dozen swipes of empty tunnel on a phone.
+    const D_FIRST = finePointer ? 240 : 150;
     const gapFor = (p: FlightPost) =>
       p.tag.startsWith('Galaxy') ? 200 : p.tag.startsWith('Constellation') ? 150 : 116;
 
@@ -2138,7 +2196,9 @@ function tagLabel(tag: string) {
       flying = true;
       document.body.classList.add('flying');
       flatSection.style.display = 'none';
-      track.style.height = `${posts.length * 55 + 280}vh`;
+      // Swipes cover less document than wheel-flicks — shorten the journey
+      // per post on touch so the drift doesn't feel like rowing.
+      track.style.height = `${posts.length * (finePointer ? 55 : 38) + (finePointer ? 280 : 190)}vh`;
       window.scrollTo(0, 0);
       lenis()?.scrollTo(0, { immediate: true });
       canvas.classList.add('is-on');
