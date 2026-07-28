@@ -287,12 +287,31 @@ const postSchema = {
   gsap.registerPlugin(ScrollTrigger);
 
   const bar = document.getElementById('read-progress-bar')!;
+  const postTitle = document.querySelector<HTMLElement>('.post-title')?.textContent?.trim() ?? '';
+  const postCategory =
+    document.querySelector<HTMLElement>('.post-pill:not(.post-pill-gold)')?.textContent?.trim() ?? '';
+
+  window.posthog?.capture('post_viewed', {
+    post_title: postTitle,
+    post_category: postCategory,
+    post_path: window.location.pathname,
+  });
+
+  let readCompleteFired = false;
   ScrollTrigger.create({
     trigger: '.post-body',
     start: 'top 60%',
     end: 'bottom 40%',
     onUpdate: (self) => {
       bar.style.transform = `scaleX(${self.progress})`;
+      if (!readCompleteFired && self.progress >= 0.98) {
+        readCompleteFired = true;
+        window.posthog?.capture('post_read_completed', {
+          post_title: postTitle,
+          post_category: postCategory,
+          post_path: window.location.pathname,
+        });
+      }
     },
   });
 </script>

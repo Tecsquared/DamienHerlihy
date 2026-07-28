@@ -241,6 +241,9 @@ const allPosts = (await getCollection('posts'))
               current = audio;
               currentBtn = btn;
               btn.classList.add('is-playing');
+              window.posthog?.capture('audio_played', {
+                audio_path: new URL(src, window.location.href).pathname,
+              });
             }).catch(() => {});
           });
         });
