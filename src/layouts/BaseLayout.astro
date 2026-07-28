@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import PostHog from '../components/PostHog.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -110,6 +111,7 @@ const allPosts = (await getCollection('posts'))
       document.documentElement.classList.add('js');
       if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     </script>
+    <PostHog />
   </head>
   <body>
     <div class="sky" aria-hidden="true"></div>
@@ -239,6 +241,9 @@ const allPosts = (await getCollection('posts'))
               current = audio;
               currentBtn = btn;
               btn.classList.add('is-playing');
+              window.posthog?.capture('audio_played', {
+                audio_path: new URL(src, window.location.href).pathname,
+              });
             }).catch(() => {});
           });
         });

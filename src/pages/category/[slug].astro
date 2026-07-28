@@ -71,6 +71,13 @@ const posts = (await getCollection('posts'))
   </section>
 </BaseLayout>
 
+<script is:inline define:vars={{ categoryName: category.name, categorySlug: slug }}>
+  window.posthog?.capture('category_browsed', {
+    category_name: categoryName,
+    category_slug: categorySlug,
+  });
+</script>
+
 <style>
   .category-layout {
     display: grid;
