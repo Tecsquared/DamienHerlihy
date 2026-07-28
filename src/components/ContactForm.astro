@@ -93,6 +93,9 @@ const {
       const message = (form.querySelector('[name="message"]') as HTMLTextAreaElement).value;
       const subject = encodeURIComponent(`Message from ${name}`);
       const body = encodeURIComponent(`From: ${name} (${fromEmail})\n\n${message}`);
+      window.posthog?.capture('contact_form_submitted', {
+        source_page: window.location.pathname,
+      });
       window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
     });
   });

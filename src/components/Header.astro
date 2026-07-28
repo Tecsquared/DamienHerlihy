@@ -534,7 +534,13 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
     lockScroll(open);
   }
 
-  menuTrigger.addEventListener('click', () => setMenu(!document.body.classList.contains('menu-open')));
+  menuTrigger.addEventListener('click', () => {
+    const willOpen = !document.body.classList.contains('menu-open');
+    if (willOpen) {
+      window.posthog?.capture('menu_opened');
+    }
+    setMenu(willOpen);
+  });
 
   /* ---- Search ---- */
   function openSearch() {
@@ -585,7 +591,28 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
 
   searchTrigger.addEventListener('click', openSearch);
   searchClose.addEventListener('click', closeSearch);
-  searchInput.addEventListener('input', () => renderResults(searchInput.value));
+
+  let searchDebounce: number | undefined;
+  searchInput.addEventListener('input', () => {
+    renderResults(searchInput.value);
+    clearTimeout(searchDebounce);
+    const query = searchInput.value.trim();
+    if (query.length >= 2) {
+      searchDebounce = setTimeout(() => {
+        window.posthog?.capture('search_performed', { query });
+      }, 600);
+    }
+  });
+
+  searchResults.addEventListener('click', (e) => {
+    const result = (e.target as HTMLElement).closest<HTMLAnchorElement>('.search-result');
+    if (result) {
+      window.posthog?.capture('search_result_clicked', {
+        query: searchInput.value.trim(),
+        result_url: result.getAttribute('href'),
+      });
+    }
+  });
 
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -596,6 +623,17 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
       if (searchOverlay.classList.contains('open')) closeSearch();
       else if (document.body.classList.contains('menu-open')) setMenu(false);
     }
+  });
+
+  /* ---- External link tracking ---- */
+  document.querySelectorAll<HTMLAnchorElement>('.menu-footer-links a').forEach((link) => {
+    link.addEventListener('click', () => {
+      window.posthog?.capture('external_link_clicked', {
+        url: link.href,
+        label: link.textContent?.trim(),
+        location: 'menu_footer',
+      });
+    });
   });
 
   /* ---- Glass header on scroll ---- */
