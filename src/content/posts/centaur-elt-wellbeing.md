@@ -5,7 +5,7 @@ category: "AI & Teaching"
 tag: "Star (Note)"
 featured: false
 description: "Exploring how AI can support teacher wellbeing through gratitude journaling with an AI therapist."
-image: "/images/posts/centaurelt-2.jpg"
+image: "/images/visual-system/banners/centaur-elt-banner.png"
 ---
 
 Not long ago, teachers used to think that wellbeing was all about going to the pub on a Friday night and getting smashed.

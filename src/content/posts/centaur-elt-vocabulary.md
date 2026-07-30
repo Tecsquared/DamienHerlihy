@@ -5,7 +5,7 @@ category: "AI & Teaching"
 tag: "Star (Note)"
 featured: false
 description: "A prompt experiment to help second language students remember new vocabulary, drawing on Webb and Nation's research and Mollick's prompting blueprints."
-image: "/images/posts/centaurelt-2.jpg"
+image: "/images/visual-system/banners/centaur-elt-banner.png"
 ---
 
 It doesn't take long for an infant to become fluent in their mother tongue.

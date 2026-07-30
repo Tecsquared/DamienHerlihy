@@ -49,6 +49,7 @@ const fieldGuide = [
     desc: 'Unstructured sparks — ideas I am still trying to figure out, published before they are polished.',
     href: '/notes',
     glyph: 'star',
+    image: '/images/visual-system/masters/star-master.png',
   },
   {
     num: '02',
@@ -57,6 +58,7 @@ const fieldGuide = [
     desc: 'Stars joined into shapes. When notes start pointing at each other, a theme emerges.',
     href: '/notes',
     glyph: 'constellation',
+    image: '/images/visual-system/masters/constellation-master.png',
   },
   {
     num: '03',
@@ -65,6 +67,7 @@ const fieldGuide = [
     desc: 'Longform pieces — whole regions of sky where constellations of thought hold together.',
     href: '/essays',
     glyph: 'galaxy',
+    image: '/images/visual-system/masters/galaxy-master.png',
   },
   {
     num: '04',
@@ -73,6 +76,7 @@ const fieldGuide = [
     desc: 'Books, articles, and blogs that lit the way here. Credit where the light came from.',
     href: '/library',
     glyph: 'library',
+    image: '/images/visual-system/masters/library-master.png',
   },
 ];
 
@@ -189,46 +193,49 @@ function tagLabel(tag: string) {
           >
             <div class="guide-card-inner">
               <span class="guide-num">{item.num}</span>
-              <span class:list={['guide-glyph', `glyph-${item.glyph}`]} aria-hidden="true">
-                {item.glyph === 'star' && (
-                  <svg viewBox="0 0 48 48" fill="none">
-                    <path
-                      d="M24 6 C25.5 16 32 22.5 42 24 C32 25.5 25.5 32 24 42 C22.5 32 16 25.5 6 24 C16 22.5 22.5 16 24 6 Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                )}
-                {item.glyph === 'constellation' && (
-                  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor">
-                    <path class="const-path" d="M8 36 L18 20 L30 26 L40 10" stroke-width="1" />
-                    <circle cx="8" cy="36" r="2.5" fill="currentColor" stroke="none" />
-                    <circle cx="18" cy="20" r="2.5" fill="currentColor" stroke="none" />
-                    <circle cx="30" cy="26" r="2.5" fill="currentColor" stroke="none" />
-                    <circle cx="40" cy="10" r="2.5" fill="currentColor" stroke="none" />
-                  </svg>
-                )}
-                {item.glyph === 'galaxy' && (
-                  <svg viewBox="0 0 48 48" fill="currentColor" class="galaxy-spin">
-                    <circle cx="24" cy="24" r="3" />
-                    <circle cx="33" cy="20" r="1.6" />
-                    <circle cx="29" cy="32" r="1.6" />
-                    <circle cx="15" cy="28" r="1.6" />
-                    <circle cx="19" cy="15" r="1.6" />
-                    <circle cx="39" cy="28" r="1.1" />
-                    <circle cx="24" cy="38" r="1.1" />
-                    <circle cx="9" cy="20" r="1.1" />
-                    <circle cx="28" cy="9" r="1.1" />
-                  </svg>
-                )}
-                {item.glyph === 'library' && (
-                  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4">
-                    <path class="lib-line" d="M10 40 V12" />
-                    <path class="lib-line" d="M18 40 V8" />
-                    <path class="lib-line" d="M26 40 V14" />
-                    <path class="lib-line" d="M37 40 L30 11" />
-                  </svg>
-                )}
-              </span>
+              <div class="guide-visual">
+                <img src={item.image} alt="" width="1200" height="1200" loading="lazy" />
+                <span class:list={['guide-glyph', `glyph-${item.glyph}`]} aria-hidden="true">
+                  {item.glyph === 'star' && (
+                    <svg viewBox="0 0 48 48" fill="none">
+                      <path
+                        d="M24 6 C25.5 16 32 22.5 42 24 C32 25.5 25.5 32 24 42 C22.5 32 16 25.5 6 24 C16 22.5 22.5 16 24 6 Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  )}
+                  {item.glyph === 'constellation' && (
+                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor">
+                      <path class="const-path" d="M8 36 L18 20 L30 26 L40 10" stroke-width="1" />
+                      <circle cx="8" cy="36" r="2.5" fill="currentColor" stroke="none" />
+                      <circle cx="18" cy="20" r="2.5" fill="currentColor" stroke="none" />
+                      <circle cx="30" cy="26" r="2.5" fill="currentColor" stroke="none" />
+                      <circle cx="40" cy="10" r="2.5" fill="currentColor" stroke="none" />
+                    </svg>
+                  )}
+                  {item.glyph === 'galaxy' && (
+                    <svg viewBox="0 0 48 48" fill="currentColor" class="galaxy-spin">
+                      <circle cx="24" cy="24" r="3" />
+                      <circle cx="33" cy="20" r="1.6" />
+                      <circle cx="29" cy="32" r="1.6" />
+                      <circle cx="15" cy="28" r="1.6" />
+                      <circle cx="19" cy="15" r="1.6" />
+                      <circle cx="39" cy="28" r="1.1" />
+                      <circle cx="24" cy="38" r="1.1" />
+                      <circle cx="9" cy="20" r="1.1" />
+                      <circle cx="28" cy="9" r="1.1" />
+                    </svg>
+                  )}
+                  {item.glyph === 'library' && (
+                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4">
+                      <path class="lib-line" d="M10 40 V12" />
+                      <path class="lib-line" d="M18 40 V8" />
+                      <path class="lib-line" d="M26 40 V14" />
+                      <path class="lib-line" d="M37 40 L30 11" />
+                    </svg>
+                  )}
+                </span>
+              </div>
               <h3 class="guide-name">
                 {item.name} <em class="guide-alias">/ {item.alias}</em>
               </h3>
@@ -669,14 +676,46 @@ function tagLabel(tag: string) {
     font-size: 11px;
     letter-spacing: 0.2em;
     color: var(--ink-faint);
-    margin-bottom: 36px;
+    margin-bottom: 18px;
+  }
+
+  .guide-visual {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    margin-bottom: 26px;
+    background: var(--night);
+  }
+
+  .guide-visual img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: saturate(0.88) brightness(0.88);
+    transition:
+      transform 0.8s var(--ease),
+      filter 0.8s var(--ease);
+  }
+
+  .guide-card:hover .guide-visual img {
+    transform: scale(1.035);
+    filter: saturate(1) brightness(0.98);
   }
 
   .guide-glyph {
-    width: 48px;
-    height: 48px;
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    width: 42px;
+    height: 42px;
     color: var(--gold);
-    margin-bottom: 22px;
+    padding: 8px;
+    border: 1px solid var(--hairline-strong);
+    border-radius: 999px;
+    background: rgba(8, 8, 14, 0.72);
+    backdrop-filter: blur(8px);
   }
 
   .glyph-star svg {

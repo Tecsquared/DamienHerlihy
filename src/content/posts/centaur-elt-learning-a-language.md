@@ -5,7 +5,7 @@ category: "AI & Teaching"
 tag: "Star (Note)"
 featured: false
 description: "Comparing language learning in the past to language learning now, illustrated through the story of trying to find the meaning of Thai song lyrics."
-image: "/images/posts/centaurelt-2.jpg"
+image: "/images/visual-system/banners/centaur-elt-banner.png"
 ---
 
 This series is an extension of my deep dive article, [*AI: The State of Play in Language Teaching* in 2024](https://damien-herlihy-a-galaxy-of-knowledge.webflow.io/post/ai-the-state-of-play-for-teachers).

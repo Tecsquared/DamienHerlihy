@@ -5,7 +5,7 @@ category: "AI & Teaching"
 tag: "Star (Note)"
 featured: false
 description: "How I incorporated AI into a syllabus redesign project using a centaur-style relationship with ChatGPT."
-image: "/images/posts/centaurelt-2.jpg"
+image: "/images/visual-system/banners/centaur-elt-banner.png"
 ---
 
 In working with AI, Ethan Mollick defined two ways we can work with AI: Centaur and Cyborg. Both relationships keep the 'human in the loop' and mitigate the risks of hallucinations. Based on the title of this series, you can probably guess what type of relationship I have with AI. So, let's focus on the definition of a centaur like relationship with AI using the example of planning lessons in ESL.
