@@ -8,7 +8,15 @@ description: "The first episode of Centaur ELT. How Maggie Appleton's digital ga
 image: "/images/visual-system/banners/centaur-elt-banner.png"
 ---
 
-<div style="position:relative;width:100%;padding-top:56.25%;margin:0 0 2rem;border-radius:8px;overflow:hidden;">
+Maggie Appleton's digital garden concept captures something real about how ideas grow: not linearly, not in finished pieces, but in clusters that take shape over time. What I wanted for this site was something closer to a universe. Articles as constellations. Related ideas orbit each other, accumulate, and when a constellation is ready, it collapses into a long-form piece. The structure mirrors how thinking actually works, which is messier and more spatial than a standard blog roll ever suggests.
+
+The old site wasn't bad. It was serviceable. It just didn't bring any of that to life. The reason was pretty simple: I have a lot of ideas, but I can't code. Pre-made templates got me so far, and no further. You can feel that ceiling if you've spent any time inside a theme editor, clicking through options that are close to what you want but not quite it.
+
+So I made a project of it. The question was whether I could use AI to close the gap between the vision I had in my head and something I'd actually want to live on the web.
+
+The answer, for the homepage at least, was yes. It's now an interactive galaxy built with Three.js. (I don't even know what that stands for. Is it JavaScript? Maybe, who knows? I don't care.) The point is that not knowing the library didn't stop me. I described what I wanted; Claude Code built it.
+
+<div style="position:relative;width:100%;padding-top:56.25%;margin:2.5rem 0;border-radius:8px;overflow:hidden;">
   <iframe
     src="https://www.youtube-nocookie.com/embed/sM-7jSAJwIg"
     title="Centaur ELT, Episode 1: Building a Galaxy When You Can't Code"
@@ -18,14 +26,6 @@ image: "/images/visual-system/banners/centaur-elt-banner.png"
     allowfullscreen
   ></iframe>
 </div>
-
-Maggie Appleton's digital garden concept captures something real about how ideas grow: not linearly, not in finished pieces, but in clusters that take shape over time. What I wanted for this site was something closer to a universe. Articles as constellations. Related ideas orbit each other, accumulate, and when a constellation is ready, it collapses into a long-form piece. The structure mirrors how thinking actually works, which is messier and more spatial than a standard blog roll ever suggests.
-
-The old site wasn't bad. It was serviceable. It just didn't bring any of that to life. The reason was pretty simple: I have a lot of ideas, but I can't code. Pre-made templates got me so far, and no further. You can feel that ceiling if you've spent any time inside a theme editor, clicking through options that are close to what you want but not quite it.
-
-So I made a project of it. The question was whether I could use AI to close the gap between the vision I had in my head and something I'd actually want to live on the web.
-
-The answer, for the homepage at least, was yes. It's now an interactive galaxy built with Three.js. (I don't even know what that stands for. Is it JavaScript? Maybe, who knows? I don't care.) The point is that not knowing the library didn't stop me. I described what I wanted; Claude Code built it.
 
 That's the centaur framing that gives this series its name. Ivan Zhao, who created Notion, said something in a hiring context that stuck with me: capability is no longer a factor when hiring; he looks at taste and agency. I'd add vision, but I suspect Zhao would say taste already includes it. Either way, that's the split here. I'm the art director. I had the vision and the judgment about what fit. The agent had the technical capability. Neither of us finishes the job alone.
 
