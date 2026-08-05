@@ -15,12 +15,14 @@ interface Props {
 const {
   title = 'Damien Herlihy — A Digital Universe',
   description = 'Damien Herlihy is both a teacher and a learner of languages. Teacher, PKM nerd, and video maker — constructing a digital universe of notes, essays, and ideas.',
-  image = '/images/og-default.jpg',
+  image = '/images/visual-system/banners/galaxy-banner.png',
   schema,
 } = Astro.props;
 
 const SITE = Astro.site ?? new URL('https://www.damienherlihy.com');
-const canonicalURL = new URL(Astro.url.pathname, SITE);
+const canonicalPath =
+  Astro.url.pathname === '/' ? '/' : `${Astro.url.pathname.replace(/\/$/, '')}/`;
+const canonicalURL = new URL(canonicalPath, SITE);
 
 // Site-wide identity graph — Damien (Person) + the site (WebSite), linked by @id so AI
 // engines treat every page as authored by the same verifiable person.
@@ -86,6 +88,7 @@ const allPosts = (await getCollection('posts'))
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL.href} />
     <meta name="theme-color" content="#08080d" />
     <meta name="color-scheme" content="dark" />
     <meta property="og:type" content="website" />
@@ -117,7 +120,7 @@ const allPosts = (await getCollection('posts'))
     <div class="sky" aria-hidden="true"></div>
     <a href="#main" class="skip-link">Skip to content</a>
     <Header posts={allPosts} />
-    <main id="main">
+    <main id="main" tabindex="-1">
       <slot />
     </main>
     <Footer />
