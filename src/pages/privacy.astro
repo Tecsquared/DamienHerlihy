@@ -1,0 +1,93 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Privacy — Damien Herlihy"
+  description="What this site collects (an email address if you subscribe, nothing else you don't type), the cookieless analytics it runs, and how to be forgotten."
+>
+  <article class="privacy">
+    <p class="privacy-kicker">Privacy</p>
+    <h1>The short, honest version</h1>
+    <p class="privacy-updated">Last updated 6 August 2026</p>
+
+    <section>
+      <h2>Who runs this</h2>
+      <p>Damien Herlihy. Questions or requests: <a href="mailto:damienmunchip@gmail.com">damienmunchip@gmail.com</a>.</p>
+    </section>
+
+    <section>
+      <h2>What this site collects</h2>
+      <p>Your <strong>email address</strong> — only if you type it into the newsletter form. It goes to <strong>Audienceful</strong>, the service that sends the newsletter, and nowhere else.</p>
+      <p>The contact form doesn't send anything to a server at all — it opens your own email app with a pre-filled draft, and nothing leaves your machine until you press send.</p>
+    </section>
+
+    <section>
+      <h2>Analytics, without the creepy part</h2>
+      <p>The site uses <strong>PostHog</strong>, running on EU servers, to count page views and a few clicks (like which essays get read). It's configured cookieless: nothing is stored in your browser, no session recording, no automatic click-tracking, no identity across visits. If you come back tomorrow, it doesn't know you're you.</p>
+      <p>No advertising cookies, no cross-site tracking, no selling data — ever.</p>
+    </section>
+
+    <section>
+      <h2>Fonts</h2>
+      <p>Typefaces load from Google Fonts, so that request reaches a Google server — which, like any web request, sees your IP address. No cookies are involved.</p>
+    </section>
+
+    <section>
+      <h2>How long, and how to leave</h2>
+      <p>Your email stays on the newsletter list until you unsubscribe — there's a link in every email. Want it deleted entirely? Email me and it's gone.</p>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .privacy {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 72px 24px 64px;
+  }
+
+  .privacy-kicker {
+    margin-bottom: 10px;
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .privacy h1 {
+    margin-bottom: 8px;
+    color: var(--ink);
+    font-size: clamp(30px, 5vw, 44px);
+    line-height: 1.15;
+  }
+
+  .privacy-updated {
+    margin-bottom: 40px;
+    color: var(--ink-faint);
+    font-size: 14px;
+  }
+
+  .privacy section {
+    margin-bottom: 32px;
+  }
+
+  .privacy h2 {
+    margin-bottom: 10px;
+    color: var(--gold);
+    font-size: 17px;
+  }
+
+  .privacy p {
+    margin-bottom: 10px;
+    color: var(--ink-dim);
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  .privacy a {
+    color: var(--gold-bright);
+    text-decoration: underline;
+  }
+</style>
