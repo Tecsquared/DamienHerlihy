@@ -554,7 +554,8 @@ function tagLabel(tag: string) {
   }
 
   .m-word {
-    color: #45424e;
+    /* resting shade must keep ≥3:1 on --bg for the pre-reveal state (WCAG large text) */
+    color: #656172;
     transition: color 0.2s linear;
   }
 
