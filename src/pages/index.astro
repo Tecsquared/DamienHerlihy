@@ -49,7 +49,7 @@ const fieldGuide = [
     desc: 'Unstructured sparks — ideas I am still trying to figure out, published before they are polished.',
     href: '/notes',
     glyph: 'star',
-    image: '/images/visual-system/masters/star-master.png',
+    image: '/images/visual-system/cards/star-card.webp',
   },
   {
     num: '02',
@@ -58,7 +58,7 @@ const fieldGuide = [
     desc: 'Stars joined into shapes. When notes start pointing at each other, a theme emerges.',
     href: '/notes',
     glyph: 'constellation',
-    image: '/images/visual-system/masters/constellation-master.png',
+    image: '/images/visual-system/cards/constellation-card.webp',
   },
   {
     num: '03',
@@ -67,7 +67,7 @@ const fieldGuide = [
     desc: 'Longform pieces — whole regions of sky where constellations of thought hold together.',
     href: '/essays',
     glyph: 'galaxy',
-    image: '/images/visual-system/masters/galaxy-master.png',
+    image: '/images/visual-system/cards/galaxy-card.webp',
   },
   {
     num: '04',
@@ -76,7 +76,7 @@ const fieldGuide = [
     desc: 'Books, articles, and blogs that lit the way here. Credit where the light came from.',
     href: '/library',
     glyph: 'library',
-    image: '/images/visual-system/masters/library-master.png',
+    image: '/images/visual-system/cards/library-card.webp',
   },
 ];
 
@@ -194,7 +194,7 @@ function tagLabel(tag: string) {
             <div class="guide-card-inner">
               <span class="guide-num">{item.num}</span>
               <div class="guide-visual">
-                <img src={item.image} alt="" width="1200" height="1200" loading="lazy" />
+                <img src={item.image} alt="" width="600" height="600" loading="lazy" />
                 <span class:list={['guide-glyph', `glyph-${item.glyph}`]} aria-hidden="true">
                   {item.glyph === 'star' && (
                     <svg viewBox="0 0 48 48" fill="none">
