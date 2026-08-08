@@ -73,6 +73,40 @@
       { threshold: 0.5 }
     );
     observer.observe(section);
+
+    var formContainer = document.getElementById('audienceful-5qfwcu');
+    if (!formContainer) return;
+
+    var signupAttempted = false;
+    var completionCaptured = false;
+    formContainer.addEventListener(
+      'submit',
+      function () {
+        signupAttempted = true;
+      },
+      true
+    );
+
+    function captureConfirmedSignup() {
+      if (!signupAttempted || completionCaptured) return;
+      var successContainer = formContainer.querySelector(
+        '[class*="audienceful-container"].success'
+      );
+      if (!successContainer) return;
+      completionCaptured = true;
+      window.posthog?.capture('newsletter_signup_completed', {
+        provider: 'audienceful'
+      });
+      successObserver.disconnect();
+    }
+
+    var successObserver = new MutationObserver(captureConfirmedSignup);
+    successObserver.observe(formContainer, {
+      attributes: true,
+      attributeFilter: ['class'],
+      childList: true,
+      subtree: true
+    });
   });
 </script>
 
