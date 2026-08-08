@@ -6,7 +6,29 @@ const apiHost = import.meta.env.PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com
 {
   projectToken && (
     <script is:inline define:vars={{ projectToken, apiHost }}>
-      // Official PostHog loader, configured for anonymous, cookieless product analytics.
+      const internalStorageKey = 'posthog_internal_user';
+      let isInternalUser = false;
+
+      try {
+        const internalParams = new URLSearchParams(window.location.search);
+        const internalParam = internalParams.get('posthog_internal');
+        if (internalParam === '1') localStorage.setItem(internalStorageKey, 'true');
+        if (internalParam === '0') localStorage.removeItem(internalStorageKey);
+        isInternalUser = localStorage.getItem(internalStorageKey) === 'true';
+        if (internalParam === '1' || internalParam === '0') {
+          internalParams.delete('posthog_internal');
+          const cleanQuery = internalParams.toString();
+          history.replaceState(
+            null,
+            '',
+            location.pathname + (cleanQuery ? `?${cleanQuery}` : '') + location.hash
+          );
+        }
+      } catch {
+        isInternalUser = false;
+      }
+
+      // Official PostHog loader, configured for anonymous product analytics.
       !(function (t, e) {
         var o, n, p, r;
         e.__SV ||
@@ -38,7 +60,7 @@ const apiHost = import.meta.env.PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com
                   return u.toString(1) + '.people (stub)';
                 },
                 o =
-                  'init capture register register_once register_for_session unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group identify setPersonProperties setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags resetGroups onFeatureFlags addFeatureFlagsHandler onSessionId'.split(
+                  'init capture register register_once register_for_session unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group identify setPersonProperties setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroups onFeatureFlags addFeatureFlagsHandler onSessionId startSessionRecording stopSessionRecording sessionRecordingStarted'.split(
                     ' '
                   ),
                 n = 0;
@@ -54,13 +76,16 @@ const apiHost = import.meta.env.PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com
       posthog.init(projectToken, {
         api_host: apiHost,
         defaults: '2026-05-30',
-        persistence: 'memory',
+        persistence: 'localStorage',
         person_profiles: 'identified_only',
         autocapture: false,
-        capture_pageview: true,
+        capture_pageview: false,
         capture_pageleave: true,
         disable_session_recording: true,
       });
+      posthog.register({ is_internal_user: isInternalUser });
+      posthog.capture('$pageview');
+      if (isInternalUser) posthog.stopSessionRecording();
 
       // Useful interactions only; no form contents, email addresses, or link text are captured.
       document.addEventListener('click', (event) => {
