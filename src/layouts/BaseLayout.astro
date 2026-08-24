@@ -10,6 +10,7 @@ interface Props {
   description?: string;
   image?: string;
   schema?: object | object[];
+  townSquare?: boolean;
 }
 
 const {
@@ -17,6 +18,7 @@ const {
   description = 'Damien Herlihy is both a teacher and a learner of languages. Teacher, PKM nerd, and video maker — constructing a digital universe of notes, essays, and ideas.',
   image = '/images/visual-system/banners/galaxy-banner.png',
   schema,
+  townSquare = false,
 } = Astro.props;
 
 const SITE = Astro.site ?? new URL('https://www.damienherlihy.com');
@@ -103,6 +105,9 @@ const allPosts = (await getCollection('posts'))
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    {townSquare && <link rel="preconnect" href="https://townsquare.cauenapier.com" crossorigin />}
+    {townSquare && <link rel="stylesheet" href="https://townsquare.cauenapier.com/widget.css" />}
+    {townSquare && <link rel="stylesheet" href="https://townsquare.cauenapier.com/api/sites/site_v8ZU0BK5wrEd524a/style.css" />}
     <link
       href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Outfit:wght@300..700&family=Space+Mono:ital,wght@0,400;0,700&display=swap"
       rel="stylesheet"

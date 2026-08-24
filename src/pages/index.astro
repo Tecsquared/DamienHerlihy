@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Universe from '../components/Universe.astro';
 import Subscribe from '../components/Subscribe.astro';
+import TownSquare from '../components/TownSquare.astro';
 import { getCollection } from 'astro:content';
 
 const allPosts = (await getCollection('posts')).sort(
@@ -108,6 +109,7 @@ function tagLabel(tag: string) {
 <BaseLayout
   title="Damien Herlihy — A Digital Universe"
   description="Teacher, PKM nerd, and video maker — when the stars align. A digital universe of notes, essays, and ideas about language teaching and learning."
+  townSquare
 >
   <Universe posts={starPosts} />
 
@@ -375,6 +377,8 @@ function tagLabel(tag: string) {
       </ul>
     </div>
   </section>
+
+  <TownSquare />
 
   <!-- ✦ TRANSMISSION -->
   <section class="section subscribe-section">

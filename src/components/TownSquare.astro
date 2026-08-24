@@ -1,0 +1,91 @@
+<section class="townsquare-section section" aria-labelledby="townsquare-heading">
+  <div class="container townsquare-grid">
+    <header class="townsquare-copy" data-reveal>
+      <p class="eyebrow">Open channel</p>
+      <h2 id="townsquare-heading">Who else is under this sky?</h2>
+      <p>
+        TownSquare shows who else is visiting right now. Wander in, say hello, or just
+        share the same patch of sky for a moment.
+      </p>
+    </header>
+
+    <div class="townsquare-panel" data-reveal data-reveal-delay="0.12">
+      <div id="townsquare-root"></div>
+    </div>
+  </div>
+</section>
+
+<script is:inline type="module">
+  import { mountTownSquare } from 'https://townsquare.cauenapier.com/townsquare.mjs';
+
+  const root = document.getElementById('townsquare-root');
+  if (root) {
+    mountTownSquare(root, {
+      serverOrigin: 'https://townsquare.cauenapier.com',
+      siteKey: 'site_v8ZU0BK5wrEd524a',
+      theme: 'host',
+    });
+  }
+</script>
+
+<style>
+  .townsquare-section {
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+    background:
+      radial-gradient(circle at 72% 38%, rgba(217, 169, 79, 0.08), transparent 34%),
+      rgba(5, 5, 8, 0.35);
+  }
+
+  .townsquare-grid {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.28fr);
+    gap: clamp(40px, 7vw, 100px);
+    align-items: center;
+  }
+
+  .townsquare-copy .eyebrow {
+    margin-bottom: 16px;
+  }
+
+  .townsquare-copy h2 {
+    max-width: 520px;
+    margin-bottom: 22px;
+  }
+
+  .townsquare-copy > p:last-child {
+    max-width: 460px;
+    color: var(--ink-dim);
+    font-size: clamp(17px, 1.6vw, 20px);
+    line-height: 1.65;
+  }
+
+  .townsquare-panel {
+    min-width: 0;
+    padding: clamp(10px, 1.5vw, 18px);
+    overflow: hidden;
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--r-lg);
+    background: rgba(13, 13, 20, 0.72);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+  }
+
+  :global(#townsquare-root) {
+    min-height: 320px;
+  }
+
+  @media (max-width: 800px) {
+    .townsquare-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .townsquare-copy h2,
+    .townsquare-copy > p:last-child {
+      max-width: 620px;
+    }
+
+    :global(#townsquare-root) {
+      min-height: 280px;
+    }
+  }
+</style>
