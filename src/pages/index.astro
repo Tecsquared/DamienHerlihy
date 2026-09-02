@@ -196,7 +196,11 @@ function tagLabel(tag: string) {
             <div class="guide-card-inner">
               <span class="guide-num">{item.num}</span>
               <div class="guide-visual">
-                <img src={item.image} alt="" width="600" height="600" loading="lazy" />
+                <picture>
+                  <source srcset={item.image.replace(/\.webp$/, '.avif')} type="image/avif" />
+                  <source srcset={item.image} type="image/webp" />
+                  <img src={item.image} alt="" width="600" height="600" loading="lazy" />
+                </picture>
                 <span class:list={['guide-glyph', `glyph-${item.glyph}`]} aria-hidden="true">
                   {item.glyph === 'star' && (
                     <svg viewBox="0 0 48 48" fill="none">
@@ -702,6 +706,10 @@ function tagLabel(tag: string) {
     transition:
       transform 0.8s var(--ease),
       filter 0.8s var(--ease);
+  }
+
+  .guide-visual picture {
+    display: contents;
   }
 
   .guide-card:hover .guide-visual img {

@@ -91,6 +91,7 @@ const allPosts = (await getCollection('posts'))
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL.href} />
+    <link rel="describedby" href="/llms.txt" type="text/markdown" />
     <meta name="theme-color" content="#08080d" />
     <meta name="color-scheme" content="dark" />
     <meta property="og:type" content="website" />
