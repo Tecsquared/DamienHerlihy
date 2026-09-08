@@ -132,6 +132,16 @@ function tagLabel(tag: string) {
           class="link">Trat English Community</a
         >.
       </p>
+      <p class="hero-update" id="hero-update">
+        I&rsquo;ve passed every Notion consultant certification test and completed the formal
+        process&mdash;I&rsquo;m now a Notion consultant.
+        <a
+          href="https://www.notion.com/@languagelayouts"
+          target="_blank"
+          rel="noopener noreferrer"
+          >See my Notion profile <span aria-hidden="true">&nearr;</span></a
+        >
+      </p>
       <div class="hero-actions" id="hero-actions">
         <a href="#universe" class="btn" data-magnetic>
           Explore the universe
@@ -409,6 +419,7 @@ function tagLabel(tag: string) {
 
   .hero-eyebrow,
   .hero-sub,
+  .hero-update,
   .hero-actions,
   .hero-legend {
     opacity: 0;
@@ -416,6 +427,7 @@ function tagLabel(tag: string) {
 
   html:not(.js) .hero-eyebrow,
   html:not(.js) .hero-sub,
+  html:not(.js) .hero-update,
   html:not(.js) .hero-actions,
   html:not(.js) .hero-legend {
     opacity: 1;
@@ -453,7 +465,27 @@ function tagLabel(tag: string) {
     max-width: 48ch;
     font-size: clamp(16px, 1.6vw, 19px);
     color: var(--ink-dim);
-    margin-bottom: 38px;
+    margin-bottom: 18px;
+  }
+
+  .hero-update {
+    max-width: 54ch;
+    margin-bottom: 34px;
+    padding-left: 16px;
+    border-left: 1px solid var(--hairline-strong);
+    color: var(--ink-dim);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  .hero-update a {
+    color: var(--gold-bright);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .hero-update a:hover {
+    color: var(--ink);
   }
 
   .hero-actions {
@@ -1282,6 +1314,7 @@ function tagLabel(tag: string) {
     tl.to('#hero-eyebrow', { opacity: 1, duration: 1 }, 0.2)
       .to('.hwi', { y: 0, duration: 1.1, stagger: 0.055, ease: 'power4.out' }, 0.35)
       .to('#hero-sub', { opacity: 1, duration: 1.2 }, 1.0)
+      .to('#hero-update', { opacity: 1, duration: 1.2 }, 1.08)
       .to('#hero-actions', { opacity: 1, duration: 1.2 }, 1.15)
       .to('#hero-legend', { opacity: 1, duration: 1.4 }, 1.5);
 
@@ -1298,7 +1331,7 @@ function tagLabel(tag: string) {
       },
     });
   } else {
-    gsap.set('#hero-eyebrow, #hero-sub, #hero-actions, #hero-legend', { opacity: 1 });
+    gsap.set('#hero-eyebrow, #hero-sub, #hero-update, #hero-actions, #hero-legend', { opacity: 1 });
     gsap.set('.hwi', { y: 0 });
   }
 
