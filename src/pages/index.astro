@@ -132,16 +132,32 @@ function tagLabel(tag: string) {
           class="link">Trat English Community</a
         >.
       </p>
-      <p class="hero-update" id="hero-update">
-        I&rsquo;ve passed every Notion consultant certification test and completed the formal
-        process. I&rsquo;m now a Notion consultant.
+      <div class="hero-update" id="hero-update">
         <a
+          class="hero-badge"
+          href="https://www.credly.com/badges/95b369ef-51f5-47bb-9281-1e31820a31b6/public_url"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Verify my Notion Service Specialist credential on Credly"
+        >
+          <img
+            src="/images/notion-service-specialist.png"
+            alt="Notion Service Specialist badge"
+            width="2048"
+            height="2048"
+          />
+        </a>
+        <p class="hero-update-copy">
+          I&rsquo;ve passed every Notion consultant certification test and completed the formal
+          process. I&rsquo;m now a Notion consultant.
+          <a
           href="https://www.notion.com/@languagelayouts"
           target="_blank"
           rel="noopener noreferrer"
           >See my Notion profile <span aria-hidden="true">&nearr;</span></a
-        >
-      </p>
+          >
+        </p>
+      </div>
       <div class="hero-actions" id="hero-actions">
         <a href="#universe" class="btn" data-magnetic>
           Explore the universe
@@ -469,6 +485,9 @@ function tagLabel(tag: string) {
   }
 
   .hero-update {
+    display: flex;
+    align-items: center;
+    gap: 16px;
     max-width: 54ch;
     margin-bottom: 34px;
     padding-left: 16px;
@@ -478,14 +497,42 @@ function tagLabel(tag: string) {
     line-height: 1.65;
   }
 
-  .hero-update a {
+  .hero-badge {
+    flex: 0 0 88px;
+    border-radius: var(--radius-sm);
+  }
+
+  .hero-badge img {
+    width: 88px;
+    height: 88px;
+    border-radius: var(--radius-sm);
+  }
+
+  .hero-update-copy {
+    margin: 0;
+  }
+
+  .hero-update-copy a {
     color: var(--gold-bright);
     text-decoration: underline;
     text-underline-offset: 3px;
   }
 
-  .hero-update a:hover {
+  .hero-update-copy a:hover {
     color: var(--ink);
+  }
+
+  @media (max-width: 520px) {
+    .hero-update {
+      align-items: flex-start;
+    }
+
+    .hero-badge,
+    .hero-badge img {
+      width: 72px;
+      height: 72px;
+      flex-basis: 72px;
+    }
   }
 
   .hero-actions {
