@@ -19,5 +19,8 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Claude
-.claude/
+# Claude (keep local settings private, share the tips reminder)
+.claude/*
+!.claude/settings.json
+!.claude/tips.md
+!.claude/hooks/
