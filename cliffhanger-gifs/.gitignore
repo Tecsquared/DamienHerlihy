@@ -1,2 +1,4 @@
 node_modules/
 out/
+ai/
+gifs/*_ai.*
